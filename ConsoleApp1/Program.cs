@@ -118,7 +118,7 @@ public class PortChat
                     {
                         error_Counter++;
                         Console.WriteLine("Error Cycle Counter: " + error_Counter.ToString());
-                        log.Debug("Error cycle (motor signal without Trigger) - Count: " + error_Counter.ToString());
+                        log.Error("Error cycle (motor signal without Trigger) - Count: " + error_Counter.ToString());
                         detected_Motor_signal_on = false;
                     }
                 }
