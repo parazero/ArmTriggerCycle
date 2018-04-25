@@ -1,0 +1,144 @@
+﻿//Arduino code for Arm-Trigger test bench.
+//Uses Arduino MEGA
+//Arduino PIN	---- Other Devices pin
+//	3 (PWM)		----	SmartAir UART 3 (Black)
+// 14 (TX3)		----	FTDI 3
+// 15 (RX3)		----	FTDI 2
+// 16 (TX2)		----	SmartAir UART 1 (Green)
+// 17 (RX2)		----	SmartAir UART 2 (Blue)
+String inputString = "";         // a String to hold incoming data
+String inputString2 = "";
+
+boolean stringComplete = false;  // whether the string is complete
+boolean stringComplete2 = false;
+boolean wasInLow = true;
+
+#define CHANNEL_1_PIN 3
+
+void calcSignal() 
+{
+    //record the interrupt time so that we can tell if the receiver has a signal from the transmitter 
+    //if the pin has gone HIGH, record the microseconds since the Arduino started up 
+    if( (digitalRead(CHANNEL_1_PIN) == HIGH)&& (wasInLow == false))
+    { 
+        Serial3.println("Motor Signal High");
+        wasInLow = true;
+    } 
+    //otherwise, the pin has gone LOW 
+    if (digitalRead(CHANNEL_1_PIN) == LOW)
+    { 
+        Serial3.println("Motor Signal Low");
+        wasInLow = false;
+    } 
+} 
+
+
+void setup() {
+  // initialize serial:
+  Serial.begin(115200);
+  Serial2.begin(115200);//Telemetry Green Wire goes to TX2, Telemetry Blue Wire goes to RX2, Telemetry GND is not Mandatory
+  Serial3.begin(115200);
+  // reserve 200 bytes for the inputString:
+  inputString2.reserve(200);
+
+  attachInterrupt(digitalPinToInterrupt(CHANNEL_1_PIN), calcSignal, CHANGE);
+}
+
+void loop() {
+  // print the string when a newline arrives:
+  serialEvent();
+  if (stringComplete2) {
+    Serial2.println(inputString2);
+    // clear the string:
+    inputString2 = "";
+    stringComplete2 = false;
+  }
+}
+
+/*
+  SerialEvent occurs whenever a new data comes in the hardware serial RX. This
+  routine is run between each time loop() runs, so using delay inside loop can
+  delay response. Multiple bytes of data may be available.
+*/
+void serialEvent() {
+  //Serial.println("w");
+/*  while (Serial3.available()) 
+  {
+    Serial.println("Port3 New data:");
+    Serial.println(Serial3.available());
+    
+    // get the new byte:
+    char inChar = (char)Serial3.read();
+    // add it to the inputString:
+    inputString += inChar;
+    // if the incoming character is a newline, set a flag so the main loop can
+    // do something about it:
+    if (inChar == '\n') 
+    {
+      stringComplete = true;
+      //Serial.println("d");
+    }
+    if (inputString=="a")
+    {
+      Serial.println("<ARM>");
+      Serial2.println("<ARM>");
+    }
+    if (inputString=="d")
+    {
+      Serial.println("<DISARM>");
+      Serial2.println("<DISARM>");
+    }
+        if (inputString=="r")
+    {
+      Serial.println("<REARM>");
+      Serial2.println("<REARM>");
+    }
+    if (inputString=="f")
+    {
+      Serial.println("<FIRE>");
+      Serial2.println("<FIRE>");
+    }
+    inputString = "";
+    Serial.println(inputString);
+  }*/
+  while (Serial2.available()) 
+  {
+    // get the new byte:
+    //Serial2.setTimeout(100);
+    //Serial.println("Port2 New data:");
+    //Serial.println(Serial2.available());
+    char inChar = (char)Serial2.read();
+    //String TMP = Serial2.readString();
+    // add it to the inputString:
+    
+    // if the incoming character is a newline, set a flag so the main loop can
+    // do something about it:
+    if (inChar == '\n') 
+    {
+      //stringComplete = true;
+      //Serial.println("d");
+      //Serial.println(inputString2);
+      Serial3.println(inputString2);
+      if (inputString2.substring(0,4)=="<1,0")
+      {
+        //Serial.println("<ARM>");
+        Serial2.println("<ARM>");
+        Serial3.println("<ARM>");
+      }
+      if (inputString2.substring(0,4)=="<1,1")
+      {
+        //Serial.println("<FIRE>");
+        Serial2.println("<FIRE>");
+        Serial3.println("<FIRE>");
+      }
+      inputString2 = "";
+    //}
+     //Serial3.println(TMP);
+     //Serial.println("d");
+    }
+    else
+    {
+      inputString2 += inChar;
+    }
+  }
+}
