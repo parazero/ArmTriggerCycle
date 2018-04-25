@@ -15,6 +15,7 @@ public class PortChat
     static string param;
     static bool detected_Motor_signal_on;
     static long trigger_with_Motor_High_Counter;
+    static long error_Counter;
 
     //private static readonly log4net.ILog log =
     //        log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -27,6 +28,7 @@ public class PortChat
     public static void Main(string[] args)
     {
         trigger_with_Motor_High_Counter = 0;
+        error_Counter = 0;
         param = args[0];
         log.Debug(param);
         detected_Motor_signal_on = false;
@@ -108,8 +110,15 @@ public class PortChat
                     if (message.Contains("<1,1,") && detected_Motor_signal_on)
                     {
                         trigger_with_Motor_High_Counter++;
-                        Console.WriteLine(trigger_with_Motor_High_Counter.ToString());
+                        Console.WriteLine("Arm- Trigger Cycle Counter: " + trigger_with_Motor_High_Counter.ToString());
                         log.Debug("SmartAir Indicated triggering after Motor High signal - Count: " + trigger_with_Motor_High_Counter.ToString());
+                        detected_Motor_signal_on = false;
+                    }
+                    else if (message.Contains("<") && !message.Contains("<1,1,") && detected_Motor_signal_on)
+                    {
+                        error_Counter++;
+                        Console.WriteLine("Error Cycle Counter: " + error_Counter.ToString());
+                        log.Debug("Error cycle (motor signal without Trigger) - Count: " + error_Counter.ToString());
                         detected_Motor_signal_on = false;
                     }
                 }
