@@ -1,19 +1,29 @@
 ﻿//Arduino code for Arm-Trigger test bench.
 //Uses Arduino MEGA
+//all unmarked connectors are number left to right
 //Arduino PIN	---- Other Devices pin
 //	3 (PWM)		----	SmartAir UART 3 (Black)
 // 14 (TX3)		----	FTDI 3
 // 15 (RX3)		----	FTDI 2
 // 16 (TX2)		----	SmartAir UART 1 (Green)
 // 17 (RX2)		----	SmartAir UART 2 (Blue)
+// 2  (PWM)		----	SmartAir RC 3 (Blue)
 String inputString = "";         // a String to hold incoming data
 String inputString2 = "";
 
 boolean stringComplete = false;  // whether the string is complete
 boolean stringComplete2 = false;
 boolean wasInLow = true;
+boolean printPulseWidth = false;
 
 #define CHANNEL_1_PIN 3
+#define CHANNEL_2_PIN 2
+volatile unsigned long start_timer;
+volatile unsigned long pulse_width;
+
+boolean PWMwasInLow = true;
+boolean PWMwasInHigh = true;
+boolean PWMReset = true;
 
 void calcSignal() 
 {
@@ -23,18 +33,59 @@ void calcSignal()
     { 
         Serial3.println("Motor Signal High");
         wasInLow = true;
+        printPulseWidth = true;
+        PWMwasInLow = false;
+        PWMwasInHigh = false;
+        PWMReset = true;
+        delay(40);
+        attachInterrupt(digitalPinToInterrupt(CHANNEL_2_PIN), calcSignal2, CHANGE);
     } 
     //otherwise, the pin has gone LOW 
     if (digitalRead(CHANNEL_1_PIN) == LOW)
     { 
         Serial3.println("Motor Signal Low");
         wasInLow = false;
-    } 
+        detachInterrupt(digitalPinToInterrupt(CHANNEL_2_PIN));
+    }
 } 
+void calcSignal2() 
+{
+    if( (digitalRead(CHANNEL_2_PIN) == HIGH) && (PWMwasInLow == true))
+    {
+        start_timer = micros();
+        //Serial.println("Motor Signal High");
+        PWMwasInLow = false;
+        PWMwasInHigh = true;
+    }
+    //otherwise, the pin has gone LOW
+    if ( (digitalRead(CHANNEL_2_PIN) == LOW) && (PWMwasInHigh == true) )
+    {
+        pulse_width = (( (volatile long)micros() - start_timer)/10)*10;
+        if( (digitalRead(CHANNEL_1_PIN) == HIGH)&& (printPulseWidth == true))
+        {
+          Serial3.print("PWM Pulse Width: " );
+          Serial3.println(pulse_width);
+          printPulseWidth = false;
+        }
+        //Serial.println("Motor Signal Low");        
+        PWMwasInLow = false;
+        PWMwasInHigh = false;
+        PWMReset = true;
+    }
 
+    if ( (digitalRead(CHANNEL_2_PIN) == LOW) && (PWMReset == true) )
+    {
+        
+        PWMwasInLow = true;
+        PWMwasInHigh = false;
+    }
+}
 
 void setup() {
   // initialize serial:
+  PWMwasInLow = false;
+  PWMwasInHigh = false;
+  PWMReset = true;
   Serial.begin(115200);
   Serial2.begin(115200);//Telemetry Green Wire goes to TX2, Telemetry Blue Wire goes to RX2, Telemetry GND is not Mandatory
   Serial3.begin(115200);
@@ -42,6 +93,7 @@ void setup() {
   inputString2.reserve(200);
 
   attachInterrupt(digitalPinToInterrupt(CHANNEL_1_PIN), calcSignal, CHANGE);
+  //attachInterrupt(digitalPinToInterrupt(CHANNEL_2_PIN), calcSignal2, CHANGE);
 }
 
 void loop() {
