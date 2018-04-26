@@ -15,7 +15,9 @@ public class PortChat
     static string param;
     static bool detected_Motor_signal_on;
     static long trigger_with_Motor_High_Counter;
-    static long error_Counter;
+    static long trigger_with_Motor_High_error_Counter;
+    static long PWM_width_Counter;
+    static long PWM_width_error_Counter;
 
     //private static readonly log4net.ILog log =
     //        log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -28,7 +30,10 @@ public class PortChat
     public static void Main(string[] args)
     {
         trigger_with_Motor_High_Counter = 0;
-        error_Counter = 0;
+        trigger_with_Motor_High_error_Counter = 0;
+        PWM_width_Counter = 0;
+        PWM_width_error_Counter = 0;
+
         param = args[0];
         log.Debug(param);
         detected_Motor_signal_on = false;
@@ -56,7 +61,11 @@ public class PortChat
         _continue = true;
         readThread.Start();
 
-        Console.Write("Port is Open");
+        Console.WriteLine("Arm - Trigger Tester");
+        if (param.Equals("Motor"))
+        {
+            Console.WriteLine("PSOF should be 1000");
+        }
         //name = Console.ReadLine();
 
         Console.WriteLine("Type QUIT to exit");
@@ -95,7 +104,7 @@ public class PortChat
                     {
                         Console.WriteLine("Reset in 1 Second");
                         log.Debug("Reset SmartAir in 1 second due to Motor off detection");
-                        Thread.Sleep(1000);
+                        Thread.Sleep(5000);
                         _serialPort.Write("RST\r\n");
                     }
                 }
@@ -116,10 +125,24 @@ public class PortChat
                     }
                     else if (message.Contains("<") && !message.Contains("<1,1,") && detected_Motor_signal_on)
                     {
-                        error_Counter++;
-                        Console.WriteLine("Error Cycle Counter: " + error_Counter.ToString());
-                        log.Error("Error cycle (motor signal without Trigger) - Count: " + error_Counter.ToString());
+                        trigger_with_Motor_High_error_Counter++;
+                        Console.WriteLine("Error Cycle Counter: " + trigger_with_Motor_High_error_Counter.ToString());
+                        log.Error("Error cycle (motor signal without Trigger) - Count: " + trigger_with_Motor_High_error_Counter.ToString());
                         detected_Motor_signal_on = false;
+                    }
+                    if (message.Contains("PWM Pulse Width"))
+                    {
+                        if (Convert.ToInt32(message.Substring(17, 4)) >= 900 && Convert.ToInt32(message.Substring(17, 4)) <= 1100)
+                        {
+                            PWM_width_Counter++;
+                        }
+                        else
+                        {
+                            PWM_width_error_Counter++;
+                        }
+                        
+                        Console.WriteLine("PWM Width Counter: " + PWM_width_Counter.ToString() + " PWM Width Error Counter:" + PWM_width_error_Counter.ToString());
+                        log.Debug("PWM Width Counter: " + PWM_width_Counter.ToString() + " PWM Width Error Counter:" + PWM_width_error_Counter.ToString());
                     }
                 }
             }
