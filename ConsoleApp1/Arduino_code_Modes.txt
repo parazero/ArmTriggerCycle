@@ -1,0 +1,118 @@
+﻿//Arduino code for Arm-Disarm test bench.
+//Uses Arduino MEGA
+//Arduino PIN  ---- Other Devices pin
+// 13 (PWM)   ----  SmartAir RC 3 (White)
+//  4 (PWM)   ----  SmartAir RC 2 (Red)
+// GND      ----  SmartAir RC 6 (Black)
+
+void setup()
+{
+	pinMode (4 , OUTPUT); // arming pin
+	pinMode (13 , OUTPUT); // Trigger pin
+	digitalWrite(4, LOW);
+	digitalWrite(13, LOW);
+	Serial.begin(115200);
+	float multi = 1.5;
+}
+
+void loop()
+{
+    float multi = 1.6;
+    //char x=Serial.read();
+    int ArmCycle = 0;
+    while (true)
+    {
+		for (int i= 0; i < 160*multi + 20 ; i++)
+		{
+			if (i<20*multi)
+			{
+				if (i==1)
+					Serial.println("Low1");
+				LowPWM();
+			}
+			else if ((i>=20*multi) & (i < 40*multi))
+			{
+				if(i==20*multi)
+					Serial.println("High1");
+				HighPWM();
+			}//One
+			else if ((i>=40*multi) & (i < 60*multi))
+			{
+				if(i==40*multi)
+					Serial.println("Low2");
+		        LowPWM();
+		    }
+			else if ((i>=60*multi) & (i < 80*multi))
+			{
+				if(i==60*multi)
+					Serial.println("High2");
+				HighPWM();
+			}//Two
+			else if ((i>=80*multi) & (i < 100*multi))
+			{
+				if(i==80*multi)
+					Serial.println("Low3");
+		        LowPWM();
+			}
+			else if ((i>=100*multi) & (i < 120*multi))
+			{
+				if(i==100*multi)
+					Serial.println("High3");
+		        HighPWM();
+			}//Three
+			else if ((i>=120*multi) & (i < 140*multi))
+			{
+				if(i==120*multi)
+					Serial.println("Low4");
+		        LowPWM();
+		    }
+			else if ((i>=140*multi) & (i < 160*multi))
+			{
+				if(i==140*multi)
+					Serial.println("High4");
+		        HighPWM();
+			}//Four
+			else if ((i>=160*multi))
+			{
+				if(i==160*multi)
+					Serial.println("LowFinal");
+				LowPWM();
+			}
+		}
+		ArmCycle= ArmCycle+1;
+		if (ArmCycle%3==0)
+		{
+			//Serial.println("@@@Manual");
+			Serial.print("Manual / Auto / Maintenance Cycles:");
+			Serial.println(ArmCycle/3);
+		}
+		//else if (ArmCycle%3==1)
+		//Serial.println("@@@Maintenance");
+		//else if (ArmCycle%3==2)
+		//Serial.println("@@@Auto");
+	}
+}
+
+//Low PWM in both channels
+void LowPWM()
+{
+	digitalWrite(13, HIGH);
+    digitalWrite(4, HIGH);
+    delay(1);
+	digitalWrite(13, LOW);
+	digitalWrite(4, LOW);
+	delay(19);
+}
+
+//High PWM in Arm channel Only
+void HighPWM()
+{
+	digitalWrite(13, HIGH);
+	digitalWrite(4, HIGH);
+	delay(1);
+	digitalWrite(13, LOW);
+	delay(17);
+	//digitalWrite(13, LOW);
+	digitalWrite(4, LOW);
+	delay(2);
+}

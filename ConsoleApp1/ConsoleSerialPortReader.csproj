@@ -54,7 +54,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Arduino_Code.txt" />
+    <Content Include="Arduino_Code_Arm_Disarm.txt" />
+    <Content Include="Arduino_Code_Arm_Trigger.txt" />
+    <Content Include="Arduino_code_Modes.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

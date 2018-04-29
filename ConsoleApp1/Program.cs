@@ -18,6 +18,12 @@ public class PortChat
     static long trigger_with_Motor_High_error_Counter;
     static long PWM_width_Counter;
     static long PWM_width_error_Counter;
+    static bool PreviousModeIsMaintenance;
+    static bool PreviousModeIsManual;
+    static bool PreviousModeIsAuto;
+    static long Mode_Transitions_Counter;
+    static long Mode_Transitions_Error_Counter;
+    static long Mode_Cycles_Indeicator;
 
     //private static readonly log4net.ILog log =
     //        log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -33,11 +39,19 @@ public class PortChat
         trigger_with_Motor_High_error_Counter = 0;
         PWM_width_Counter = 0;
         PWM_width_error_Counter = 0;
+        detected_Motor_signal_on = false;
+        PreviousModeIsMaintenance = false;
+        PreviousModeIsAuto = false;
+        PreviousModeIsManual = false;
+        Mode_Transitions_Counter = 0;
+        Mode_Transitions_Error_Counter = 0;
+        Mode_Cycles_Indeicator = 0;
 
         param = args[0];
         log.Debug(param);
-        detected_Motor_signal_on = false;
+
         string message;
+
         StringComparer stringComparer = StringComparer.OrdinalIgnoreCase;
         Thread readThread = new Thread(Read);
         FileInfo qqq = new System.IO.FileInfo(Directory.GetCurrentDirectory());
@@ -140,9 +154,113 @@ public class PortChat
                         {
                             PWM_width_error_Counter++;
                         }
-                        
+
                         Console.WriteLine("PWM Width Counter: " + PWM_width_Counter.ToString() + " PWM Width Error Counter:" + PWM_width_error_Counter.ToString());
                         log.Debug("PWM Width Counter: " + PWM_width_Counter.ToString() + " PWM Width Error Counter:" + PWM_width_error_Counter.ToString());
+                    }
+                }
+                if (param.Contains("Modes"))
+                {
+                    bool FirstCycle = !(PreviousModeIsAuto || PreviousModeIsMaintenance || PreviousModeIsManual);
+                    if (message.Contains("Maintenance mode") && ((PreviousModeIsManual == true) || FirstCycle))
+                    {
+                        Console.WriteLine("Maintenance Mode");
+                        log.Debug("Maintenance Mode");
+                        PreviousModeIsMaintenance = true;
+                        PreviousModeIsAuto = false;
+                        PreviousModeIsManual = false;
+                        Mode_Cycles_Indeicator = Mode_Cycles_Indeicator + 1;
+                    }
+                    else if (message.Contains("Maintenance mode") && !((PreviousModeIsManual == true) || FirstCycle))
+                    {
+                        if (!PreviousModeIsMaintenance)
+                        {
+                            Console.WriteLine("Maintenance Mode not after manual mode: " + Mode_Transitions_Counter.ToString());
+                            Console.WriteLine("Mnt: {0}, Auto: {1}, Man: {2}", PreviousModeIsMaintenance, PreviousModeIsAuto, PreviousModeIsManual);
+                            log.Error("Maintenance Mode not after manual mode: " + Mode_Transitions_Counter.ToString());
+                            Mode_Cycles_Indeicator = -1;
+                            Mode_Transitions_Error_Counter++;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Duplicate maintenance.");
+                            log.Error("Duplicate maintenance line entry.");
+                        }
+                    }
+
+                    if (message.Contains("Auto triggering") && ((PreviousModeIsMaintenance == true) || FirstCycle))
+                    {
+                        Console.WriteLine("Auto triggering Mode");
+                        log.Debug("Auto triggering Mode");
+                        PreviousModeIsAuto = true;
+                        PreviousModeIsManual = false;
+                        PreviousModeIsMaintenance = false;
+                        Mode_Cycles_Indeicator = Mode_Cycles_Indeicator + 2;
+                    }
+                    else if (message.Contains("Auto triggering") && !((PreviousModeIsMaintenance == true) || FirstCycle))
+                    {
+                        if (!PreviousModeIsAuto)
+                        {
+                            Console.WriteLine("Auto Mode not after maintenance mode: " + Mode_Transitions_Counter.ToString());
+                            Console.WriteLine("Mnt: {0}, Auto: {1}, Man: {2}", PreviousModeIsMaintenance, PreviousModeIsAuto, PreviousModeIsManual);
+                            log.Error("Auto Mode not after maintenance mode: " + Mode_Transitions_Counter.ToString());
+                            Mode_Cycles_Indeicator = -1;
+                            Mode_Transitions_Error_Counter++;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Duplicate auto.");
+                            log.Error("Duplicate auto line entry.");
+                        }
+                    }
+
+                    if (message.Contains("Manual triggering") && ((PreviousModeIsAuto == true) || FirstCycle))
+                    {
+                        Console.WriteLine("Manual triggering Mode");
+                        log.Debug("Manual triggering Mode");
+                        PreviousModeIsManual = true;
+                        PreviousModeIsMaintenance = false;
+                        PreviousModeIsAuto = false;
+                        Mode_Cycles_Indeicator = Mode_Cycles_Indeicator + 4;
+                    }
+                    else if (message.Contains("Manual triggering") && !((PreviousModeIsAuto == true) || FirstCycle))
+                    {
+                        if (!PreviousModeIsManual)
+                        {
+                            Console.WriteLine("Manual Mode not after auto mode: " + Mode_Transitions_Counter.ToString());
+                            Console.WriteLine("Mnt: {0}, Auto: {1}, Man: {2}", PreviousModeIsMaintenance, PreviousModeIsAuto, PreviousModeIsManual);
+                            Console.WriteLine("\n\r");
+                            log.Error("Manual Mode not after auto mode: " + Mode_Transitions_Counter.ToString());
+                            Mode_Cycles_Indeicator = -1;
+                            Mode_Transitions_Error_Counter++;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Duplicate manual.");
+                            log.Error("Duplicate manual line entry.");
+                        }
+                    }
+                    if (Mode_Cycles_Indeicator == 7)
+                    {
+                        Mode_Cycles_Indeicator = 0;
+                        Mode_Transitions_Counter++;
+                        Console.WriteLine("Modes Cycle completed: " + Mode_Transitions_Counter.ToString());
+                        log.Debug("Modes Cycle completed: " + Mode_Transitions_Counter.ToString());
+                        Console.WriteLine("Modes Cycle Errors: " + Mode_Transitions_Error_Counter.ToString());
+                        log.Debug("Modes Cycle Errors: " + Mode_Transitions_Error_Counter.ToString());
+                    }
+                    else if (Mode_Cycles_Indeicator == -1)
+                    {
+
+                        Console.WriteLine("Modes Cycle Errors: " + Mode_Transitions_Error_Counter.ToString());
+                        log.Debug("Modes Cycle Errors: " + Mode_Transitions_Error_Counter.ToString());
+                        Mode_Cycles_Indeicator = 0;
+                    }
+                    else if ((Mode_Cycles_Indeicator >= 1) && (Mode_Cycles_Indeicator <= 6))
+                    {
+
+                        Console.WriteLine("Modes MidCycle");
+                        log.Debug("Modes MidCycle");
                     }
                 }
             }

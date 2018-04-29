@@ -1,0 +1,73 @@
+﻿//Arduino code for Arm-Disarm test bench.
+//Uses Arduino MEGA
+//Arduino PIN	---- Other Devices pin
+// 13 (PWM)		----	SmartAir RC 3 (White)
+//  4 (PWM)		----	SmartAir RC 2 (Red)
+// GND			----	SmartAir RC 6 (Black)
+
+void setup() 
+{
+	pinMode (4 , OUTPUT); // arming pin
+	pinMode (13 , OUTPUT); // Trigger pin
+	digitalWrite(4, LOW);
+	digitalWrite(13, LOW);
+	Serial.begin(9600);
+}
+
+void loop()
+{
+    char x=Serial.read();
+    int ArmCycle = 0;
+    while (true)
+    {
+		for (int i= 0; i < 400 ; i++)
+		{
+			if (i<100)
+			{
+				if (i==1)
+					Serial.println("Low");
+				digitalWrite(13, HIGH);
+				digitalWrite(4, HIGH);
+				delay(1);
+				digitalWrite(13, LOW);
+				digitalWrite(4, LOW);
+				delay(19);
+			}
+			else if ((i>=100) & (i < 275))
+			{
+				if(i==100)
+				Serial.println("High");
+				digitalWrite(13, HIGH);
+				digitalWrite(4, HIGH);
+				delay(1);
+				digitalWrite(13, LOW);
+				delay(17);
+				//digitalWrite(13, LOW);
+				digitalWrite(4, LOW);
+				delay(2);
+			}
+			else if (i>=275)
+			{
+			if(i==275)
+				Serial.println("Low again");
+			digitalWrite(13, HIGH);
+			digitalWrite(4, HIGH);
+			delay(1);
+			digitalWrite(13, LOW);
+			digitalWrite(4, LOW);
+			delay(19);
+		}
+	}
+	ArmCycle= ArmCycle+1;
+	if (ArmCycle%3==0)
+	{
+		Serial.println("@@@Disarmed");
+		Serial.print("Arm / Disarm Cycles:");
+		Serial.println(ArmCycle/3);
+	}
+	else if (ArmCycle%3==1)
+		Serial.println("@@@Idle");
+	else if (ArmCycle%3==2)
+		Serial.println("@@@Armed");
+	}
+}
