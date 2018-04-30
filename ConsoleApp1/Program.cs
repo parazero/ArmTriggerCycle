@@ -133,14 +133,18 @@ public class PortChat
                     if (message.Contains("<1,1,") && detected_Motor_signal_on)
                     {
                         trigger_with_Motor_High_Counter++;
-                        Console.WriteLine("Arm- Trigger Cycle Counter: " + trigger_with_Motor_High_Counter.ToString());
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        Console.WriteLine("Arm - Trigger Cycle Counter: " + trigger_with_Motor_High_Counter.ToString());
+                        Console.ResetColor();
                         log.Debug("SmartAir Indicated triggering after Motor High signal - Count: " + trigger_with_Motor_High_Counter.ToString());
                         detected_Motor_signal_on = false;
                     }
                     else if (message.Contains("<") && !message.Contains("<1,1,") && detected_Motor_signal_on)
                     {
                         trigger_with_Motor_High_error_Counter++;
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Error Cycle Counter: " + trigger_with_Motor_High_error_Counter.ToString());
+                        Console.ResetColor();
                         log.Error("Error cycle (motor signal without Trigger) - Count: " + trigger_with_Motor_High_error_Counter.ToString());
                         detected_Motor_signal_on = false;
                     }
@@ -155,7 +159,11 @@ public class PortChat
                             PWM_width_error_Counter++;
                         }
 
-                        Console.WriteLine("PWM Width Counter: " + PWM_width_Counter.ToString() + " PWM Width Error Counter:" + PWM_width_error_Counter.ToString());
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        Console.WriteLine("PWM Width Counter: " + PWM_width_Counter.ToString());
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("PWM Width Error Counter:" + PWM_width_error_Counter.ToString());
+                        Console.ResetColor();
                         log.Debug("PWM Width Counter: " + PWM_width_Counter.ToString() + " PWM Width Error Counter:" + PWM_width_error_Counter.ToString());
                     }
                 }
@@ -175,8 +183,10 @@ public class PortChat
                     {
                         if (!PreviousModeIsMaintenance)
                         {
+                            Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("Maintenance Mode not after manual mode: " + Mode_Transitions_Counter.ToString());
                             Console.WriteLine("Mnt: {0}, Auto: {1}, Man: {2}", PreviousModeIsMaintenance, PreviousModeIsAuto, PreviousModeIsManual);
+                            Console.ResetColor();
                             log.Error("Maintenance Mode not after manual mode: " + Mode_Transitions_Counter.ToString());
                             Mode_Cycles_Indeicator = -1;
                             Mode_Transitions_Error_Counter++;
@@ -201,8 +211,10 @@ public class PortChat
                     {
                         if (!PreviousModeIsAuto)
                         {
+                            Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("Auto Mode not after maintenance mode: " + Mode_Transitions_Counter.ToString());
                             Console.WriteLine("Mnt: {0}, Auto: {1}, Man: {2}", PreviousModeIsMaintenance, PreviousModeIsAuto, PreviousModeIsManual);
+                            Console.ResetColor();
                             log.Error("Auto Mode not after maintenance mode: " + Mode_Transitions_Counter.ToString());
                             Mode_Cycles_Indeicator = -1;
                             Mode_Transitions_Error_Counter++;
@@ -227,9 +239,11 @@ public class PortChat
                     {
                         if (!PreviousModeIsManual)
                         {
+                            Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("Manual Mode not after auto mode: " + Mode_Transitions_Counter.ToString());
                             Console.WriteLine("Mnt: {0}, Auto: {1}, Man: {2}", PreviousModeIsMaintenance, PreviousModeIsAuto, PreviousModeIsManual);
-                            Console.WriteLine("\n\r");
+                            Console.ResetColor();
+                            //Console.WriteLine("\n\r");
                             log.Error("Manual Mode not after auto mode: " + Mode_Transitions_Counter.ToString());
                             Mode_Cycles_Indeicator = -1;
                             Mode_Transitions_Error_Counter++;
@@ -244,15 +258,20 @@ public class PortChat
                     {
                         Mode_Cycles_Indeicator = 0;
                         Mode_Transitions_Counter++;
+                        Console.ForegroundColor = ConsoleColor.Blue;
                         Console.WriteLine("Modes Cycle completed: " + Mode_Transitions_Counter.ToString());
                         log.Debug("Modes Cycle completed: " + Mode_Transitions_Counter.ToString());
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Modes Cycle Errors: " + Mode_Transitions_Error_Counter.ToString());
                         log.Debug("Modes Cycle Errors: " + Mode_Transitions_Error_Counter.ToString());
+                        Console.ResetColor();
                     }
                     else if (Mode_Cycles_Indeicator == -1)
                     {
 
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Modes Cycle Errors: " + Mode_Transitions_Error_Counter.ToString());
+                        Console.ResetColor();
                         log.Debug("Modes Cycle Errors: " + Mode_Transitions_Error_Counter.ToString());
                         Mode_Cycles_Indeicator = 0;
                     }
