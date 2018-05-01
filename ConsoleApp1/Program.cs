@@ -24,6 +24,12 @@ public class PortChat
     static long Mode_Transitions_Counter;
     static long Mode_Transitions_Error_Counter;
     static long Mode_Cycles_Indeicator;
+    static bool PreviousStateIsIdle;
+    static long State_Cycles_Indeicator;
+    static bool PreviousStateIsArmed;
+    static bool PreviousStateIsDisarmed;
+    static long State_Transitions_Counter;
+    static long State_Transitions_Error_Counter;
 
     //private static readonly log4net.ILog log =
     //        log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -280,6 +286,132 @@ public class PortChat
 
                         Console.WriteLine("Modes MidCycle");
                         log.Debug("Modes MidCycle");
+                    }
+                }
+                if (param.Contains("ArmDisarm"))
+                {
+                    bool StatesFirstCycle = !(PreviousStateIsIdle || PreviousStateIsArmed || PreviousStateIsDisarmed);
+                    if (message.Contains(" ARMED") && ((PreviousStateIsIdle == true) || StatesFirstCycle))
+                    {
+                        Console.BackgroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Armed State, DO NOT TURN OFF SMARTAIR.");
+                        Console.ResetColor();
+                        log.Debug("SmartAir Armed");
+                        PreviousStateIsArmed = true;
+                        PreviousStateIsDisarmed = false;
+                        PreviousStateIsIdle = false;
+                        State_Cycles_Indeicator = State_Cycles_Indeicator + 1;
+                    }
+                    else if (message.Contains(" ARMED") && !((PreviousStateIsIdle == true) || StatesFirstCycle))
+                    {
+                        if (!PreviousStateIsArmed)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Armed state not after Idle state: " + State_Transitions_Counter.ToString());
+                            Console.WriteLine("Armed: {0}, Idle: {1}, Disarmed: {2}", PreviousStateIsArmed, PreviousStateIsIdle, PreviousStateIsDisarmed);
+                            Console.ResetColor();
+                            log.Error("Armed state not after Idle state: " + State_Transitions_Counter.ToString());
+                            State_Cycles_Indeicator = -1;
+                            State_Transitions_Error_Counter++;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Duplicate Armed.");
+                            log.Error("Duplicate Armed line entry.");
+                        }
+                    }
+
+                    if (message.Contains("DISARMED") && ((PreviousStateIsArmed == true) || StatesFirstCycle))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("It is safe to power off the SmartAir.");
+                        Console.ResetColor();
+                        Console.WriteLine("Disarmed State");
+                        log.Debug("Disarmed state");
+                        PreviousStateIsArmed = false;
+                        PreviousStateIsDisarmed = true;
+                        PreviousStateIsIdle = false;
+                        State_Cycles_Indeicator = State_Cycles_Indeicator + 2;
+                    }
+                    else if (message.Contains("DISARMED") && !((PreviousStateIsArmed == true) || StatesFirstCycle))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("It is safe to power off the SmartAir.");
+                        Console.ResetColor();
+                        if (!PreviousStateIsDisarmed)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Disarmed state not after Armed state: " + State_Transitions_Counter.ToString());
+                            Console.WriteLine("Armed: {0}, Idle: {1}, Disarmed: {2}", PreviousStateIsArmed, PreviousStateIsIdle, PreviousStateIsDisarmed);
+                            Console.ResetColor();
+                            log.Error("Disarmed state not after Armed state: " + State_Transitions_Counter.ToString());
+                            State_Cycles_Indeicator = -1;
+                            State_Transitions_Error_Counter++;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Duplicate Disarmed.");
+                            log.Error("Duplicate Disarmed line entry.");
+                        }
+                    }
+
+                    if (message.Contains("IDLE") && ((PreviousStateIsDisarmed == true) || StatesFirstCycle))
+                    {
+                        Console.WriteLine("Idle state");
+                        log.Debug("Idle state");
+                        PreviousStateIsArmed = false;
+                        PreviousStateIsDisarmed = false;
+                        PreviousStateIsIdle = true;
+                        State_Cycles_Indeicator = State_Cycles_Indeicator + 4;
+                    }
+                    else if (message.Contains("IDLE") && !((PreviousStateIsDisarmed == true) || StatesFirstCycle))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("It is safe to power off the SmartAir.");
+                        Console.ResetColor();
+                        if (!PreviousStateIsIdle)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Idle state not after Disarmed state: " + State_Transitions_Counter.ToString());
+                            Console.WriteLine("Armed: {0}, Idle: {1}, Disarmed: {2}", PreviousStateIsArmed, PreviousStateIsIdle, PreviousStateIsDisarmed);
+                            Console.ResetColor();
+                            //Console.WriteLine("\n\r");
+                            log.Error("Idle state not after Disarmed state: " + State_Transitions_Counter.ToString());
+                            State_Cycles_Indeicator = -1;
+                            State_Transitions_Error_Counter++;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Duplicate Idle.");
+                            log.Error("Duplicate Idle line entry.");
+                        }
+                    }
+                    if (State_Cycles_Indeicator == 7)
+                    {
+                        State_Cycles_Indeicator = 0;
+                        State_Transitions_Counter++;
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        Console.WriteLine("State Cycle completed: " + State_Transitions_Counter.ToString());
+                        log.Debug("State Cycle completed: " + State_Transitions_Counter.ToString());
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("State Cycle Errors: " + State_Transitions_Error_Counter.ToString());
+                        log.Debug("State Cycle Errors: " + State_Transitions_Error_Counter.ToString());
+                        Console.ResetColor();
+                    }
+                    else if (State_Cycles_Indeicator == -1)
+                    {
+
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("State Cycle Errors: " + State_Transitions_Error_Counter.ToString());
+                        Console.ResetColor();
+                        log.Debug("State Cycle Errors: " + State_Transitions_Error_Counter.ToString());
+                        State_Cycles_Indeicator = 0;
+                    }
+                    else if ((State_Cycles_Indeicator >= 1) && (State_Cycles_Indeicator <= 6))
+                    {
+
+                        Console.WriteLine("State MidCycle");
+                        log.Debug("State MidCycle");
                     }
                 }
             }
