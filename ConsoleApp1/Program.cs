@@ -6,6 +6,9 @@ using log4net.Config;
 using System;
 using System.IO;
 using System.IO.Ports;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 
 public class PortChat
@@ -30,6 +33,13 @@ public class PortChat
     static bool PreviousStateIsDisarmed;
     static long State_Transitions_Counter;
     static long State_Transitions_Error_Counter;
+    static int localPort;
+    static int localBasePort;
+    static int remotePort;
+    static int remoteBasePort;
+    static int portOffset;
+
+    static IPAddress localAddr = IPAddress.Parse("127.0.0.1");
 
     //private static readonly log4net.ILog log =
     //        log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -52,14 +62,32 @@ public class PortChat
         Mode_Transitions_Counter = 0;
         Mode_Transitions_Error_Counter = 0;
         Mode_Cycles_Indeicator = 0;
+        localBasePort = 13000;
+        remoteBasePort = 11000;
+        portOffset = 0;
 
         param = args[0];
         log.Debug(param);
-
+        if (param.Equals("MotorSignalDetection"))
+        {
+            localPort = localBasePort;
+            remotePort = remoteBasePort;
+        }
+        else if (param.Equals("Modes"))
+        {
+            localPort = localBasePort+1;
+            remotePort = remoteBasePort + 1;
+        }
+        else if (param.Equals("ArmDisarm"))
+        {
+            localPort = localBasePort+2;
+            remotePort = remoteBasePort + 2;
+        }
+        UdpClient udpClient = new UdpClient(localPort);
         string message;
 
         StringComparer stringComparer = StringComparer.OrdinalIgnoreCase;
-        Thread readThread = new Thread(Read);
+        Thread readThread = new Thread(() => Read(udpClient));
         FileInfo qqq = new System.IO.FileInfo(Directory.GetCurrentDirectory());
         log.Debug(qqq.ToString());
         // Create a new SerialPort object with default settings.
@@ -77,6 +105,9 @@ public class PortChat
         _serialPort.ReadTimeout = 500;
         _serialPort.WriteTimeout = 500;
 
+
+        udpClient.Connect(localAddr, remotePort);
+
         _serialPort.Open();
         _continue = true;
         readThread.Start();
@@ -84,7 +115,7 @@ public class PortChat
         Console.WriteLine("Arm - Trigger Tester");
         if (param.Equals("Motor"))
         {
-            Console.WriteLine("PSOF should be 1000");
+            Console.WriteLine("PSON should be 1000");
         }
         //name = Console.ReadLine();
 
@@ -102,6 +133,12 @@ public class PortChat
             {
                 _serialPort.WriteLine(
                     String.Format("{0}\r\n", message));
+                if (stringComparer.Equals("MS", message))
+                    SendToUI(udpClient, "MotorSignal", 1, 20, 300, 400030);
+                if (stringComparer.Equals("Modes", message))
+                    SendToUI(udpClient, "Modes", 11, 22, 333, 412430);
+                if (stringComparer.Equals("AD", message))
+                    SendToUI(udpClient, "ArmDisarm", 99, 22222, 333, 412430);
             }
         }
 
@@ -109,7 +146,7 @@ public class PortChat
         _serialPort.Close();
     }
 
-    public static void Read()
+    public static void Read(UdpClient udpClient)
     {
         while (_continue)
         {
@@ -118,7 +155,7 @@ public class PortChat
                 string message = _serialPort.ReadLine();
                 log.Debug(message);
                 Console.WriteLine(message);
-                if (param.Contains("Motor"))
+                if (param.Equals("Motor"))
                 {
                     if (message.Contains("MOTOR_OFF"))
                     {
@@ -128,8 +165,10 @@ public class PortChat
                         _serialPort.Write("RST\r\n");
                     }
                 }
-                if (param.Contains("MotorSignalDetection"))
+                if (param.Equals("MotorSignalDetection"))
                 {
+
+                    //SendToUI(udpClient,"MotorSignal", PWM_width_Counter, PWM_width_error_Counter, trigger_with_Motor_High_Counter, trigger_with_Motor_High_error_Counter);
                     if (message.Contains("Motor Signal High") && !detected_Motor_signal_on)
                     {
                         Console.WriteLine("Detected Motor Signal High");
@@ -144,6 +183,7 @@ public class PortChat
                         Console.ResetColor();
                         log.Debug("SmartAir Indicated triggering after Motor High signal - Count: " + trigger_with_Motor_High_Counter.ToString());
                         detected_Motor_signal_on = false;
+                        SendToUI(udpClient, "MotorSignal", PWM_width_Counter, PWM_width_error_Counter, trigger_with_Motor_High_Counter, trigger_with_Motor_High_error_Counter);
                     }
                     else if (message.Contains("<") && !message.Contains("<1,1,") && detected_Motor_signal_on)
                     {
@@ -153,6 +193,7 @@ public class PortChat
                         Console.ResetColor();
                         log.Error("Error cycle (motor signal without Trigger) - Count: " + trigger_with_Motor_High_error_Counter.ToString());
                         detected_Motor_signal_on = false;
+                        SendToUI(udpClient, "MotorSignal", PWM_width_Counter, PWM_width_error_Counter, trigger_with_Motor_High_Counter, trigger_with_Motor_High_error_Counter);
                     }
                     if (message.Contains("PWM Pulse Width"))
                     {
@@ -171,9 +212,10 @@ public class PortChat
                         Console.WriteLine("PWM Width Error Counter:" + PWM_width_error_Counter.ToString());
                         Console.ResetColor();
                         log.Debug("PWM Width Counter: " + PWM_width_Counter.ToString() + " PWM Width Error Counter:" + PWM_width_error_Counter.ToString());
+                        SendToUI(udpClient,"MotorSignal", PWM_width_Counter, PWM_width_error_Counter, trigger_with_Motor_High_Counter, trigger_with_Motor_High_error_Counter);
                     }
                 }
-                if (param.Contains("Modes"))
+                if (param.Equals("Modes"))
                 {
                     bool FirstCycle = !(PreviousModeIsAuto || PreviousModeIsMaintenance || PreviousModeIsManual);
                     if (message.Contains("Maintenance mode") && ((PreviousModeIsManual == true) || FirstCycle))
@@ -271,6 +313,7 @@ public class PortChat
                         Console.WriteLine("Modes Cycle Errors: " + Mode_Transitions_Error_Counter.ToString());
                         log.Debug("Modes Cycle Errors: " + Mode_Transitions_Error_Counter.ToString());
                         Console.ResetColor();
+                        SendToUI(udpClient,"Modes", Mode_Transitions_Counter, Mode_Transitions_Error_Counter, 0, 0);
                     }
                     else if (Mode_Cycles_Indeicator == -1)
                     {
@@ -280,6 +323,7 @@ public class PortChat
                         Console.ResetColor();
                         log.Debug("Modes Cycle Errors: " + Mode_Transitions_Error_Counter.ToString());
                         Mode_Cycles_Indeicator = 0;
+                        SendToUI(udpClient,"Modes", Mode_Transitions_Counter, Mode_Transitions_Error_Counter, 0, 0);
                     }
                     else if ((Mode_Cycles_Indeicator >= 1) && (Mode_Cycles_Indeicator <= 6))
                     {
@@ -288,7 +332,7 @@ public class PortChat
                         log.Debug("Modes MidCycle");
                     }
                 }
-                if (param.Contains("ArmDisarm"))
+                if (param.Equals("ArmDisarm"))
                 {
                     bool StatesFirstCycle = !(PreviousStateIsIdle || PreviousStateIsArmed || PreviousStateIsDisarmed);
                     if (message.Contains(" ARMED") && ((PreviousStateIsIdle == true) || StatesFirstCycle))
@@ -397,6 +441,7 @@ public class PortChat
                         Console.WriteLine("State Cycle Errors: " + State_Transitions_Error_Counter.ToString());
                         log.Debug("State Cycle Errors: " + State_Transitions_Error_Counter.ToString());
                         Console.ResetColor();
+                        SendToUI(udpClient,"ArmDisarm" ,State_Transitions_Counter, State_Transitions_Error_Counter, 0, 0);
                     }
                     else if (State_Cycles_Indeicator == -1)
                     {
@@ -406,6 +451,7 @@ public class PortChat
                         Console.ResetColor();
                         log.Debug("State Cycle Errors: " + State_Transitions_Error_Counter.ToString());
                         State_Cycles_Indeicator = 0;
+                        SendToUI(udpClient, "ArmDisarm", State_Transitions_Counter, State_Transitions_Error_Counter, 0, 0);
                     }
                     else if ((State_Cycles_Indeicator >= 1) && (State_Cycles_Indeicator <= 6))
                     {
@@ -417,6 +463,14 @@ public class PortChat
             }
             catch (TimeoutException) { }
         }
+    }
+
+    private static void SendToUI(UdpClient udpClient, String testName, long Value1, long Error1, long Value2, long Error2)
+    {
+        Byte[] sendBytes = Encoding.ASCII.GetBytes(testName + ": Value:" + Value1.ToString("D9") + " Error: " + Error1.ToString("D9")
+            + " Value2: " + Value2.ToString("D9") + " Error2: " +
+            Error2.ToString("D9") + " EOL");
+        udpClient.Send(sendBytes, sendBytes.Length);
     }
 
     // Display Port values and prompt user to enter a port.
