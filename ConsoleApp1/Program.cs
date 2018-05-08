@@ -161,7 +161,7 @@ public class PortChat
                     {
                         Console.WriteLine("Reset in 1 Second");
                         log.Debug("Reset SmartAir in 1 second due to Motor off detection");
-                        Thread.Sleep(5000);
+                        Thread.Sleep(1000);
                         _serialPort.Write("RST\r\n");
                     }
                 }
@@ -169,12 +169,15 @@ public class PortChat
                 {
 
                     //SendToUI(udpClient,"MotorSignal", PWM_width_Counter, PWM_width_error_Counter, trigger_with_Motor_High_Counter, trigger_with_Motor_High_error_Counter);
+                    bool preResetEvent = true;
                     if (message.Contains("Motor Signal High") && !detected_Motor_signal_on)
                     {
                         Console.WriteLine("Detected Motor Signal High");
                         log.Debug("Detected Motor Signal High");
                         detected_Motor_signal_on = true;
                     }
+                    if (message.Contains("<0,0,"))
+                        preResetEvent = false;
                     if (message.Contains("<1,1,") && detected_Motor_signal_on)
                     {
                         trigger_with_Motor_High_Counter++;
@@ -185,7 +188,7 @@ public class PortChat
                         detected_Motor_signal_on = false;
                         SendToUI(udpClient, "MotorSignal", PWM_width_Counter, PWM_width_error_Counter, trigger_with_Motor_High_Counter, trigger_with_Motor_High_error_Counter);
                     }
-                    else if (message.Contains("<") && !message.Contains("<1,1,") && detected_Motor_signal_on)
+                    else if (message.Contains("<") && !message.Contains("<1,1,") && detected_Motor_signal_on && !preResetEvent)
                     {
                         trigger_with_Motor_High_error_Counter++;
                         Console.ForegroundColor = ConsoleColor.Red;
