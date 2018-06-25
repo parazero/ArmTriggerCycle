@@ -174,12 +174,14 @@ void serialEvent() {
       if (inputString2.substring(0,4)=="<1,0")
       {
         //Serial.println("<ARM>");
+		delay(2000);
         Serial2.println("<ARM>");
         Serial3.println("<ARM>");
       }
       if (inputString2.substring(0,4)=="<1,1")
       {
         //Serial.println("<FIRE>");
+
         Serial2.println("<FIRE>");
         Serial3.println("<FIRE>");
       }

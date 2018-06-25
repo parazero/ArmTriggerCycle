@@ -55,7 +55,10 @@
             this.TestTypecomboBox.Items.AddRange(new object[] {
             "Motor Signal",
             "Modes",
-            "ArmDisarm"});
+            "ArmDisarm",
+            "Discharge",
+            "XBT Disarm test",
+            "XBT Power Up"});
             this.TestTypecomboBox.Location = new System.Drawing.Point(50, 47);
             this.TestTypecomboBox.Name = "TestTypecomboBox";
             this.TestTypecomboBox.Size = new System.Drawing.Size(121, 21);
