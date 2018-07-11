@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO.Ports;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -20,6 +21,9 @@ namespace TestsDisplays
         static int remotePort;
         static int remoteBasePort;
         static UdpClient tesyUDP;
+        static string ArduinoComParam = "";
+        static string SMAComParam = "";
+
 
         IPAddress localAddr = IPAddress.Parse("127.0.0.1");
         UdpClient udpClient = new UdpClient();
@@ -34,16 +38,17 @@ namespace TestsDisplays
 
             localBasePort = 11000; // Opposite than AppConsole
             remoteBasePort = 13000;
-            //buttonStart.Click += new EventHandler(buttonStart_Click);
-
 
             InitializeComponent();
-            //udpClient.Connect(localAddr, 13000);
 
             textBoxUpdateDelegate = new AddDataDelegate(AddTextTotextBoxMethod);
 
-            //Thread writeThread = new Thread(WriteData);
-            //writeThread.Start();
+            foreach (string s in SerialPort.GetPortNames())
+            {
+                ArduinoPortcomboBox.Items.Add(s);
+                SmartAirPortcomboBox.Items.Add(s);
+
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -254,7 +259,6 @@ namespace TestsDisplays
                     passedTests3textBox.Visible = false;
                     failedTests2textBox.Visible = false;
                 }
-
                 if (typeIndex.Equals(5))
                 {
                     label1.Text = "Passed tests:";
@@ -279,6 +283,7 @@ namespace TestsDisplays
                 }
                 Thread writeThread = new Thread(() => WriteDataAsync(udpClient));
                 writeThread.Start();
+
             }
             else if (buttonStart.Text.Equals("Stop"))
             {
@@ -297,6 +302,16 @@ namespace TestsDisplays
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void ArduinoPortbutton_Click(object sender, EventArgs e)
+        {
+            ArduinoComParam = ArduinoPortcomboBox.SelectedText;
+        }
+
+        private void SMAPortbutton_Click(object sender, EventArgs e)
+        {
+            SMAComParam = SmartAirPortcomboBox.SelectedText;
         }
     }
 }

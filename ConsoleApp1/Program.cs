@@ -48,6 +48,8 @@ public class PortChat
     static long Successful_Init_Counter_Error;
 
     static string message;
+    static string CurrDir = "";
+    static string LogName = "";
 
     static string ArduinoCOMPort = "COM3";
 
@@ -66,6 +68,9 @@ public class PortChat
 
     public static void Main(string[] args)
     {
+        CurrDir = Directory.GetCurrentDirectory();
+
+        //UpdatelogFournetfile();
         trigger_with_Motor_High_Counter = 0;
         trigger_with_Motor_High_error_Counter = 0;
         PWM_width_Counter = 0;
@@ -88,8 +93,8 @@ public class PortChat
         Successful_Init_Counter_Error = 0;
 
 
+
         param = args[0];
-        log.Debug(param);
         if (param.Equals("MotorSignalDetection"))
         {
             localPort = localBasePort;
@@ -97,12 +102,12 @@ public class PortChat
         }
         else if (param.Equals("Modes"))
         {
-            localPort = localBasePort+1;
+            localPort = localBasePort + 1;
             remotePort = remoteBasePort + 1;
         }
         else if (param.Equals("ArmDisarm"))
         {
-            localPort = localBasePort+2;
+            localPort = localBasePort + 2;
             remotePort = remoteBasePort + 2;
         }
         else if (param.Equals("Discharge"))
@@ -128,6 +133,9 @@ public class PortChat
             localPort = localBasePort + 6;
             remotePort = remoteBasePort + 6;
         }
+        LogName = param + "_" + DateTime.Now.ToString().Replace("/","-").Replace(" ","_").Replace(":","-") + ".log";
+        log4net.GlobalContext.Properties["LogName"] = LogName;
+        log.Debug(param);
 
         UdpClient udpClient = new UdpClient(localPort);
         string message;
@@ -139,15 +147,30 @@ public class PortChat
         // Create a new SerialPort object with default settings.
         _serialPort = new SerialPort();
         // Allow the user to set the appropriate properties.
-        _serialPort.PortName = SetPortName("COM6");
-        _serialPort.BaudRate = SetPortBaudRate(115200);
-        _serialPort.Parity = SetPortParity(_serialPort.Parity);
-        _serialPort.DataBits = SetPortDataBits(_serialPort.DataBits);
-        _serialPort.StopBits = SetPortStopBits(_serialPort.StopBits);
-        _serialPort.Handshake = SetPortHandshake(_serialPort.Handshake);
-        log.Debug("Port Data: COM ID: " + _serialPort.PortName);
+        if (args.Length.Equals(1))
+        {
+            _serialPort.PortName = SetPortName("COM6");
+            _serialPort.BaudRate = SetPortBaudRate(115200);
+            _serialPort.Parity = SetPortParity(_serialPort.Parity);
+            _serialPort.DataBits = SetPortDataBits(_serialPort.DataBits);
+            _serialPort.StopBits = SetPortStopBits(_serialPort.StopBits);
+            _serialPort.Handshake = SetPortHandshake(_serialPort.Handshake);
+            log.Debug("Port Data: COM ID: " + _serialPort.PortName);
 
-        ArduinoCOMPort = SetPortName(ArduinoCOMPort);
+            ArduinoCOMPort = SetPortName(ArduinoCOMPort);
+        }
+        else if (args.Length.Equals(3))
+        {
+            _serialPort.PortName = args[1];
+            _serialPort.BaudRate = 115200;
+            _serialPort.Parity = 0;
+            _serialPort.DataBits = 8;
+            _serialPort.StopBits = (StopBits)1;
+            _serialPort.Handshake = 0;
+            log.Debug("Port Data: COM ID: " + _serialPort.PortName);
+
+            ArduinoCOMPort = args[2];
+        }
 
         ArduinoPortInitialization();
         // Set the read/write timeouts
@@ -209,7 +232,7 @@ public class PortChat
             }
             catch (TimeoutException)
             {
-               message = _serialPort.ReadExisting();
+                message = _serialPort.ReadExisting();
             }
             if (!message.Length.Equals(0))
             {
@@ -644,10 +667,10 @@ public class PortChat
     {
         try
         {
-        Byte[] sendBytes = Encoding.ASCII.GetBytes(testName + ": Value:" + Value1.ToString("D9") + " Error: " + Error1.ToString("D9")
-            + " Value2: " + Value2.ToString("D9") + " Error2: " +
-            Error2.ToString("D9") + " EOL");
-        udpClient.Send(sendBytes, sendBytes.Length);
+            Byte[] sendBytes = Encoding.ASCII.GetBytes(testName + ": Value:" + Value1.ToString("D9") + " Error: " + Error1.ToString("D9")
+                + " Value2: " + Value2.ToString("D9") + " Error2: " +
+                Error2.ToString("D9") + " EOL");
+            udpClient.Send(sendBytes, sendBytes.Length);
         }
         catch
         {
@@ -657,7 +680,7 @@ public class PortChat
             log.ErrorFormat("Test name: {0}, Value1: {1}, Error1: {2}, Value2: {3}, Error2: {4}", testName, Value1, Error1, Value2, Error2);
             Console.ResetColor();
         }
-        
+
     }
 
     // Display Port values and prompt user to enter a port.
@@ -786,6 +809,32 @@ public class PortChat
         ArduinoPort.Handshake = 0;
         ArduinoPort.ReadBufferSize = 30000;
         ArduinoPort.Open();
+    }
+
+    private static void UpdatelogFournetfile()
+    {
+        using (FileStream fs = File.Open(CurrDir + "\\ConsoleSerialPortReader.exe.log4net", FileMode.Create, FileAccess.Write, FileShare.None))
+        {
+            string Part1 = "<?xml version=\"1.0\" encoding=\"utf - 8\" ?> \r\n < log4net > \r\n < root > \r\n < level value = \"ALL\" /> " +
+                "<appender -ref ref= \"MyAppender\" /> < appender -ref ref= \"RollingFileAppender\" /> </ root >" +
+                "< appender name = \"MyFileAppender\" type = \"log4net.Appender.FileAppender\" >" +
+                "< file value = \"application.log\" /> < appendToFile value = \"true\" />" +
+                "< lockingModel type = \"log4net.Appender.FileAppender+MinimalLock\" />" +
+                "< layout type = \"log4net.Layout.PatternLayout\" > < conversionPattern value = \"%date %level %logger - %message%newline\" />" +
+                "</ layout > </ appender > < appender name = \"RollingFileAppender\" type = \"log4net.Appender.RollingFileAppender\" >" +
+                "< file type = \"log4net.Util.PatternString\" value = \"";
+            string Part2 = CurrDir;
+            string Part3 = "\\logs/Motor-%utcdate{yyyy-MM-dd-hh-mm-ss}.log\" /> < rollingStyle value = \"Date\" /> " +
+                "< datePattern value = \"yyyyMMdd\" /> < appendToFile value = \"false\" /> < rollingStyle value = \"Size\" /> " +
+                "< maxSizeRollBackups value = \"50\" /> < maximumFileSize value = \"100MB\" /> < staticLogFileName value = \"false\" /> " +
+                "< layout type = \"log4net.Layout.PatternLayout\" > < conversionPattern value = \"%date [%thread] %level %logger - %message%newline\" /> " +
+                "</ layout > </ appender > </ log4net > ";
+
+            Byte[] info = new UTF8Encoding(true).GetBytes(Part1 + Part2 + Part3);
+            // Add some information to the file.
+            fs.Write(info, 0, info.Length);
+            fs.Close();
+        }
     }
     class CWDFileAppender : FileAppender
     {

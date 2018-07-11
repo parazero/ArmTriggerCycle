@@ -39,11 +39,15 @@
             this.PassedTests2label = new System.Windows.Forms.Label();
             this.passedTests3textBox = new System.Windows.Forms.TextBox();
             this.TestName = new System.Windows.Forms.Label();
+            this.SmartAirPortcomboBox = new System.Windows.Forms.ComboBox();
+            this.SMAPortbutton = new System.Windows.Forms.Button();
+            this.ArduinoPortcomboBox = new System.Windows.Forms.ComboBox();
+            this.ArduinoPortbutton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // PassedTest1textBox
             // 
-            this.PassedTest1textBox.Location = new System.Drawing.Point(185, 103);
+            this.PassedTest1textBox.Location = new System.Drawing.Point(182, 154);
             this.PassedTest1textBox.Name = "PassedTest1textBox";
             this.PassedTest1textBox.ReadOnly = true;
             this.PassedTest1textBox.Size = new System.Drawing.Size(100, 20);
@@ -59,7 +63,7 @@
             "Discharge",
             "XBT Disarm test",
             "XBT Power Up"});
-            this.TestTypecomboBox.Location = new System.Drawing.Point(50, 47);
+            this.TestTypecomboBox.Location = new System.Drawing.Point(47, 98);
             this.TestTypecomboBox.Name = "TestTypecomboBox";
             this.TestTypecomboBox.Size = new System.Drawing.Size(121, 21);
             this.TestTypecomboBox.TabIndex = 2;
@@ -67,7 +71,7 @@
             // 
             // buttonStart
             // 
-            this.buttonStart.Location = new System.Drawing.Point(210, 47);
+            this.buttonStart.Location = new System.Drawing.Point(207, 98);
             this.buttonStart.Name = "buttonStart";
             this.buttonStart.Size = new System.Drawing.Size(75, 23);
             this.buttonStart.TabIndex = 3;
@@ -78,7 +82,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(50, 107);
+            this.label1.Location = new System.Drawing.Point(47, 158);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(74, 13);
             this.label1.TabIndex = 4;
@@ -87,7 +91,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(50, 155);
+            this.label2.Location = new System.Drawing.Point(47, 206);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(67, 13);
             this.label2.TabIndex = 6;
@@ -96,7 +100,7 @@
             // 
             // FailedTests1textBox
             // 
-            this.FailedTests1textBox.Location = new System.Drawing.Point(185, 151);
+            this.FailedTests1textBox.Location = new System.Drawing.Point(182, 202);
             this.FailedTests1textBox.Name = "FailedTests1textBox";
             this.FailedTests1textBox.ReadOnly = true;
             this.FailedTests1textBox.Size = new System.Drawing.Size(100, 20);
@@ -106,7 +110,7 @@
             // failedTests2label
             // 
             this.failedTests2label.AutoSize = true;
-            this.failedTests2label.Location = new System.Drawing.Point(50, 255);
+            this.failedTests2label.Location = new System.Drawing.Point(47, 306);
             this.failedTests2label.Name = "failedTests2label";
             this.failedTests2label.Size = new System.Drawing.Size(67, 13);
             this.failedTests2label.TabIndex = 10;
@@ -115,7 +119,7 @@
             // 
             // failedTests2textBox
             // 
-            this.failedTests2textBox.Location = new System.Drawing.Point(185, 251);
+            this.failedTests2textBox.Location = new System.Drawing.Point(182, 302);
             this.failedTests2textBox.Name = "failedTests2textBox";
             this.failedTests2textBox.ReadOnly = true;
             this.failedTests2textBox.Size = new System.Drawing.Size(100, 20);
@@ -125,7 +129,7 @@
             // PassedTests2label
             // 
             this.PassedTests2label.AutoSize = true;
-            this.PassedTests2label.Location = new System.Drawing.Point(50, 207);
+            this.PassedTests2label.Location = new System.Drawing.Point(47, 258);
             this.PassedTests2label.Name = "PassedTests2label";
             this.PassedTests2label.Size = new System.Drawing.Size(74, 13);
             this.PassedTests2label.TabIndex = 8;
@@ -134,7 +138,7 @@
             // 
             // passedTests3textBox
             // 
-            this.passedTests3textBox.Location = new System.Drawing.Point(185, 203);
+            this.passedTests3textBox.Location = new System.Drawing.Point(182, 254);
             this.passedTests3textBox.Name = "passedTests3textBox";
             this.passedTests3textBox.ReadOnly = true;
             this.passedTests3textBox.Size = new System.Drawing.Size(100, 20);
@@ -154,11 +158,55 @@
             this.TestName.Text = "label3";
             this.TestName.Visible = false;
             // 
+            // SmartAirPortcomboBox
+            // 
+            this.SmartAirPortcomboBox.FormattingEnabled = true;
+            this.SmartAirPortcomboBox.Items.AddRange(new object[] {
+            "SmartAir Port"});
+            this.SmartAirPortcomboBox.Location = new System.Drawing.Point(47, 68);
+            this.SmartAirPortcomboBox.Name = "SmartAirPortcomboBox";
+            this.SmartAirPortcomboBox.Size = new System.Drawing.Size(121, 21);
+            this.SmartAirPortcomboBox.TabIndex = 12;
+            // 
+            // SMAPortbutton
+            // 
+            this.SMAPortbutton.Location = new System.Drawing.Point(207, 67);
+            this.SMAPortbutton.Name = "SMAPortbutton";
+            this.SMAPortbutton.Size = new System.Drawing.Size(75, 23);
+            this.SMAPortbutton.TabIndex = 13;
+            this.SMAPortbutton.Text = "Open";
+            this.SMAPortbutton.UseVisualStyleBackColor = true;
+            this.SMAPortbutton.Click += new System.EventHandler(this.SMAPortbutton_Click);
+            // 
+            // ArduinoPortcomboBox
+            // 
+            this.ArduinoPortcomboBox.FormattingEnabled = true;
+            this.ArduinoPortcomboBox.Items.AddRange(new object[] {
+            "Arduino Port"});
+            this.ArduinoPortcomboBox.Location = new System.Drawing.Point(47, 36);
+            this.ArduinoPortcomboBox.Name = "ArduinoPortcomboBox";
+            this.ArduinoPortcomboBox.Size = new System.Drawing.Size(121, 21);
+            this.ArduinoPortcomboBox.TabIndex = 14;
+            // 
+            // ArduinoPortbutton
+            // 
+            this.ArduinoPortbutton.Location = new System.Drawing.Point(207, 36);
+            this.ArduinoPortbutton.Name = "ArduinoPortbutton";
+            this.ArduinoPortbutton.Size = new System.Drawing.Size(75, 23);
+            this.ArduinoPortbutton.TabIndex = 15;
+            this.ArduinoPortbutton.Text = "Open";
+            this.ArduinoPortbutton.UseVisualStyleBackColor = true;
+            this.ArduinoPortbutton.Click += new System.EventHandler(this.ArduinoPortbutton_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(327, 332);
+            this.Controls.Add(this.ArduinoPortbutton);
+            this.Controls.Add(this.ArduinoPortcomboBox);
+            this.Controls.Add(this.SMAPortbutton);
+            this.Controls.Add(this.SmartAirPortcomboBox);
             this.Controls.Add(this.TestName);
             this.Controls.Add(this.failedTests2label);
             this.Controls.Add(this.failedTests2textBox);
@@ -191,6 +239,10 @@
         private System.Windows.Forms.Label PassedTests2label;
         private System.Windows.Forms.TextBox passedTests3textBox;
         private System.Windows.Forms.Label TestName;
+        private System.Windows.Forms.ComboBox SmartAirPortcomboBox;
+        private System.Windows.Forms.Button SMAPortbutton;
+        private System.Windows.Forms.ComboBox ArduinoPortcomboBox;
+        private System.Windows.Forms.Button ArduinoPortbutton;
     }
 }
 
