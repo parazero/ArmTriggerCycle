@@ -159,6 +159,20 @@ namespace TestsDisplays
                     passedTests3textBox.Invoke(textBoxUpdateDelegate, new Object[] { value2Value.ToString(), passedTests3textBox });
                     failedTests2textBox.Invoke(textBoxUpdateDelegate, new Object[] { error2Value.ToString(), failedTests2textBox });
                 }
+                if (returnData.Contains("ArmAtStartUp:"))
+                {
+                    //ArmDisarm: Value: 9999999 Error: 9999988 Value2: 9999977 Error2: 9999966 EOL
+                    int testIndex = returnData.IndexOf("ArmAtStartUp:");
+                    int testLength = valueIndex - testIndex;
+                    int valueValue = Convert.ToInt32(returnData.Substring(valueIndex + 7, valueLength - 8));
+                    int errorValue = Convert.ToInt32(returnData.Substring(errorIndex + 7, errorLength - 8));
+                    int value2Value = Convert.ToInt32(returnData.Substring(value2Index + 7, value2Length - 8));
+                    int error2Value = Convert.ToInt32(returnData.Substring(error2Index + 7, error2Length - 8));
+                    PassedTest1textBox.Invoke(textBoxUpdateDelegate, new Object[] { valueValue.ToString(), PassedTest1textBox });
+                    FailedTests1textBox.Invoke(textBoxUpdateDelegate, new Object[] { errorValue.ToString(), FailedTests1textBox });
+                    passedTests3textBox.Invoke(textBoxUpdateDelegate, new Object[] { value2Value.ToString(), passedTests3textBox });
+                    failedTests2textBox.Invoke(textBoxUpdateDelegate, new Object[] { error2Value.ToString(), failedTests2textBox });
+                }
                 if (returnData.Equals("exit"))
                     _continue = false;
                 
@@ -246,6 +260,17 @@ namespace TestsDisplays
                     label1.Text = "Passed tests:";
                     label2.Text = "Failed tests:";
                     TestName.Text = "XBT Init failure cycles";
+                    TestName.Visible = true;
+                    PassedTests2label.Visible = false;
+                    failedTests2label.Visible = false;
+                    passedTests3textBox.Visible = false;
+                    failedTests2textBox.Visible = false;
+                }
+                if (typeIndex.Equals(6))
+                {
+                    label1.Text = "Passed tests:";
+                    label2.Text = "Failed tests:";
+                    TestName.Text = "Arm At Init tests";
                     TestName.Visible = true;
                     PassedTests2label.Visible = false;
                     failedTests2label.Visible = false;

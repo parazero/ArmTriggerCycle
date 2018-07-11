@@ -44,6 +44,8 @@ public class PortChat
     static bool dischargeInitCycle;
     static long XBT_disarm_Counter;
     static long XBT_disarm_Counter_Error;
+    static long Successful_Init_Counter;
+    static long Successful_Init_Counter_Error;
 
     static string message;
 
@@ -82,6 +84,8 @@ public class PortChat
         portOffset = 0;
         XBT_disarm_Counter = 0;
         XBT_disarm_Counter_Error = 0;
+        Successful_Init_Counter = 0;
+        Successful_Init_Counter_Error = 0;
 
 
         param = args[0];
@@ -117,6 +121,12 @@ public class PortChat
         {
             localPort = localBasePort + 5;
             remotePort = remoteBasePort + 5;
+        }
+
+        else if (param.Equals("ArmAtStartUp"))
+        {
+            localPort = localBasePort + 6;
+            remotePort = remoteBasePort + 6;
         }
 
         UdpClient udpClient = new UdpClient(localPort);
@@ -607,6 +617,25 @@ public class PortChat
                     Thread.Sleep(5000);
                     _serialPort.WriteLine("rst\r");
                 }
+            }
+            if (param.Equals("ArmAtStartUp"))
+            {
+                if (message.Contains(": Finished successfully"))
+                {
+                    log.Debug("SmartAir finished initialization.");
+                    Thread.Sleep(3000);
+                    Successful_Init_Counter++;
+                    _serialPort.WriteLine("\r");
+                    _serialPort.WriteLine("rst\r");
+                }
+
+                if (message.Contains("System.....................: ARMED"))
+                {
+                    Successful_Init_Counter_Error++;
+                    _serialPort.WriteLine("\r");
+                    _serialPort.WriteLine("rst\r");
+                }
+                SendToUI(udpClient, "ArmAtStartUp", Successful_Init_Counter, Successful_Init_Counter_Error, 0, 0);
             }
         }
     }
