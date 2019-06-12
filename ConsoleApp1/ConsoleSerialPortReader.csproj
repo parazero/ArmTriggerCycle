@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="Arduino_ReadPWMWidthWithRCCommands.ino" />
     <None Include="ConsoleSerialPortReader.exe.log4net" />
     <None Include="packages.config" />
   </ItemGroup>

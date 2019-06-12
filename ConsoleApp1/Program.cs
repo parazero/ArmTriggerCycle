@@ -63,6 +63,7 @@ public class PortChat
     static int SleepAfterDisarmEvent = 4500;
     static int SleepForArmDuration = 2000;
     static int SleepAfterArduinoFlash = 4500;
+    static int LongTest = 0;
 
     static string message;
     static string CurrDir = "";
@@ -79,8 +80,8 @@ public class PortChat
 
 
     static IPAddress localAddr = IPAddress.Parse("127.0.0.1");
-    
 
+    static TimeSpan ts;
 
 
     //private static readonly log4net.ILog log =
@@ -238,20 +239,28 @@ public class PortChat
         _serialPort.ReceivedBytesThreshold = 1;
         _serialPort.ReadBufferSize = 6000000;
         udpClient.Connect(localAddr, remotePort);
-
-        _serialPort.Open();
         _continue = true;
-        readThread.Start();
-
-        Console.WriteLine("Arm - Trigger Tester");
-        if (param.Equals("Motor"))
+        if (!param.Equals("PWMVoltageAtPowerCycle"))
         {
-            Console.WriteLine("PSON should be 1000");
+            _serialPort.Open();
+            
+            readThread.Start();
+        }
+        //else
+        //{
+            //_continue = true;
+        //}
+
+        if (param.Equals("PWMVoltageAtPowerCycle"))
+        {
+            Console.WriteLine("Send PWRUP to start test.");
         }
         //name = Console.ReadLine();
 
         Console.WriteLine("Type QUIT to exit");
         Console.WriteLine("Channel ID: " + portOffset.ToString());
+        stopWatch = new Stopwatch();
+        stopWatch.Start();
         while (_continue)
         {
             message = Console.ReadLine();
@@ -262,8 +271,10 @@ public class PortChat
             }
             else
             {
-                _serialPort.WriteLine(
-                    String.Format("{0}\r\n", message));
+                if (!param.Equals("PWMVoltageAtPowerCycle"))
+                {
+                    _serialPort.WriteLine(String.Format("{0}\r\n", message));
+                }
                 if (stringComparer.Equals("MS", message))
                     SendToUI(udpClient, "MotorSignal", -1, 0, 0, 0);
                 if (stringComparer.Equals("Modes", message))
@@ -274,6 +285,20 @@ public class PortChat
                     SendToUI(udpClient, "Discharge", 34, 1432, 123, 87890);
                 if (stringComparer.Equals("Start", message))
                     ArduinoPort.WriteLine("Rec");
+                if (stringComparer.Equals("PWRUP", message))
+                {
+                    //readThread.Suspend();
+                    //
+                    WriteToArduino("PWRUP");
+                    Thread.Sleep(5000);
+                    //_serialPort.Open();
+                    //readThread.Resume();
+                    _serialPort.Open();
+
+                    readThread.Start();
+                }
+                if (stringComparer.Equals("PWRDWN", message))
+                    WriteToArduino("PWRDWN");
             }
         }
 
@@ -287,13 +312,18 @@ public class PortChat
         {
             try
             {
-                message = _serialPort.ReadLine();
+                if (_serialPort.IsOpen)
+                {
+                    message = _serialPort.ReadLine();
+                    FullTextSmartAir += message;
+                }
             }
             catch (TimeoutException)
             {
                 if (_serialPort.IsOpen)
                 {
                     message = _serialPort.ReadExisting();
+                    FullTextSmartAir += message;
                 }
             }
             if (!message.Length.Equals(0))
@@ -802,6 +832,8 @@ public class PortChat
                 int LongTest = 0;
                 int PWMLength = 0;
                 stopWatch = new Stopwatch();
+                if (!stopWatch.IsRunning)
+                    stopWatch.Start();
                 //WriteToSmartAir("rst");
                 //WaitForSuccessfulInit();
                 if (message.Contains(": Finished successfully"))
@@ -848,7 +880,7 @@ public class PortChat
                     WriteToSmartAir("fire");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
-                    stopWatch.Start();
+                    stopWatch.Restart();
                 }
                 if (message.Contains("SWITCH MOTOR_OFF"))
                 {
@@ -870,6 +902,7 @@ public class PortChat
                     
                     Thread.Sleep(5000);
                     WriteToSmartAir("rst");
+                    stopWatch.Reset();
                 }
                 TimeSpan ts = stopWatch.Elapsed;
                 if (ts.TotalMilliseconds >= 15000)
@@ -891,6 +924,8 @@ public class PortChat
                 stopWatch = new Stopwatch();
                 //WriteToSmartAir("rst");
                 //WaitForSuccessfulInit();
+                if (!stopWatch.IsRunning)
+                    stopWatch.Start();
                 if (message.Contains(": Finished successfully"))
                 {
                     log.Debug("SmartAir finished initialization.");
@@ -898,7 +933,6 @@ public class PortChat
                     FullTextArduino = "";
                     WaitForSuccessfulInit();
                     TrueOrFalse = FullStringPWMLengthConvertor(1050, false);
-                    stopWatch.Start();
                     if (TrueOrFalse)
                     {
                         PWM_width_Counter++;
@@ -911,11 +945,12 @@ public class PortChat
                     {
                         PWM_width_error_Counter++;
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("PWM Length at idle failed. #:" + PWM_width_error_Counter.ToString());
+                        Console.WriteLine("PWM Length at soft reset failed. #:" + PWM_width_error_Counter.ToString());
                         Console.ResetColor();
-                        log.Error("PWM Length at idle failed. #:" + PWM_width_error_Counter.ToString());
+                        log.Error("PWM Length at soft reset failed. #:" + PWM_width_error_Counter.ToString());
                     }
                     Thread.Sleep(2000);
+                    stopWatch.Restart();
                 }
                 TimeSpan ts = stopWatch.Elapsed;
                 if (ts.TotalMilliseconds >= 15000)
@@ -929,6 +964,132 @@ public class PortChat
 
                 }
                 SendToUI(udpClient, "PWMToRelaySoftReset", PWM_width_Counter, PWM_width_error_Counter, 0, 0);
+            }
+            if (param.Equals("PWMVoltageAtPowerCycle"))
+            {
+                
+                bool TrueOrFalse = false;
+                int PWMLength = 0;
+
+                
+                //WriteToSmartAir("rst");
+                //WaitForSuccessfulInit();
+                /*if (message.Contains("PWRUP"))
+                {
+                    log.Debug("SmartAir Powers up.");
+                    FullTextArduino = "";
+                    _continue = false;
+                    WriteToArduino("PWRUP");
+                    _continue = true;
+
+                }*/
+                if (!stopWatch.IsRunning)
+                    stopWatch.Start();
+                if (FullTextSmartAir.Contains(": Finished successfully"))
+                {
+                    FullTextSmartAir = "";
+                    log.Debug("SmartAir finished initialization.");
+
+                    TrueOrFalse = FullStringPWMLengthConvertor(1050, false);
+                    
+                    if (TrueOrFalse)
+                    {
+                        
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        Console.WriteLine("PWM Length at hard reset passed. #:" + PWM_width_Counter.ToString());
+                        Console.ResetColor();
+                        log.Debug("PWM Length at hard reset passed. #:" + PWM_width_Counter.ToString());
+                    }
+                    else
+                    {
+                        PWM_width_error_Counter++;
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("PWM Length at hard reset failed. #:" + PWM_width_error_Counter.ToString());
+                        Console.ResetColor();
+                        log.Error("PWM Length at hard reset failed. #:" + PWM_width_error_Counter.ToString());
+                    }
+                    Thread.Sleep(2000);
+                    FullTextArduino = "";
+                    WriteToArduino("TSTVLTG");
+                    if (FullTextArduino.Contains("Voltage #0"))
+                    {
+                        
+                    }
+                    else
+                    {
+                        General_Counter_Error++;
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Relay Voltage during hard power up trigger failed. #:" + General_Counter_Error.ToString());
+                        Console.ResetColor();
+                        log.Error("Relay Voltage during hard power up trigger failed. #:" + General_Counter_Error.ToString());
+                    }
+                    WriteToSmartAir("atg");
+                    WriteToSmartAir("fire");
+                    stopWatch.Restart();
+                }
+                if (message.Contains("SWITCH MOTOR_OFF"))
+                {
+                    Console.WriteLine("Reset in 25 Seconds");
+                    log.Debug("Reset SmartAir in 25 seconds ");
+                    FullTextArduino = "";
+                    WriteToArduino("TSTVLTG");
+                    if (FullTextArduino.Contains("Voltage #5"))
+                    {
+                        General_Counter++;
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        Console.WriteLine("Relay Voltage after trigger passed. #:" + General_Counter.ToString());
+                        Console.ResetColor();
+                        log.Error("Relay Voltage after trigger passed. #:" + General_Counter.ToString());
+                    }
+                    else
+                    {
+                        General_Counter_Error++;
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Relay Voltage after trigger failed. #:" + General_Counter_Error.ToString());
+                        Console.ResetColor();
+                        log.Error("Relay Voltage after trigger failed. #:" + General_Counter_Error.ToString());
+                    }
+
+                    Thread.Sleep(25000);
+                    FullTextArduino = "";
+                    WriteToArduino("PWRDWN");
+
+                    TrueOrFalse = FullStringPWMLengthConvertor(1050, false);
+                    if (TrueOrFalse)
+                    {
+                        PWM_width_Counter++;
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        Console.WriteLine("PWM Length at hard reset passed. #:" + PWM_width_Counter.ToString());
+                        Console.ResetColor();
+                        log.Debug("PWM Length at hard reset passed. #:" + PWM_width_Counter.ToString());
+                    }
+                    else
+                    {
+                        PWM_width_error_Counter++;
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("PWM Length at hard reset failed. #:" + PWM_width_error_Counter.ToString());
+                        Console.ResetColor();
+                        log.Error("PWM Length at hard reset failed. #:" + PWM_width_error_Counter.ToString());
+                    }
+                    Thread.Sleep(2000);
+                    WriteToArduino("PWRUP");
+                    Thread.Sleep(5000);
+                    _serialPort.Open();
+                    stopWatch.Restart();
+                }
+                ts = stopWatch.Elapsed;
+                if (ts.TotalMilliseconds >= 35000)
+                {
+                    LongTest++;
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Test Did not finish within 35 seconds. #:" + LongTest.ToString());
+                    Console.ResetColor();
+                    log.Error("Test Did not finish within 35 seconds. #:" + LongTest.ToString());
+                    WriteToSmartAir("rst");
+                    stopWatch.Restart();
+                    ts = ts.Subtract(ts);
+                }
+                SendToUI(udpClient, "PWMToRelay", PWM_width_Counter, PWM_width_error_Counter, General_Counter, General_Counter_Error);
             }
         }
     }
@@ -1227,9 +1388,13 @@ public class PortChat
 
     static void WriteToSmartAir(string TextToSend)
     {
-        _serialPort.WriteLine("\r");
-        _serialPort.WriteLine(TextToSend + "\r");
-        Thread.Sleep(SleepAfterWriteLineEvent);
+        if (_serialPort.IsOpen)
+        {
+            _serialPort.WriteLine("\r");
+            _serialPort.WriteLine(TextToSend + "\r");
+            Thread.Sleep(SleepAfterWriteLineEvent);
+        }
+
     }
 
     static int PWMLengthConvertor()
@@ -1283,5 +1448,26 @@ public class PortChat
             }
         }
         return ConditionMet;
+    }
+
+    static void WaitForSuccessfulArduinoCommand(string TextToFind)
+    {
+        WaitForInit = true;
+        //Thread.Sleep(250);
+        while (WaitForInit)
+        {
+            if (FullTextArduino.Contains(TextToFind))
+                WaitForInit = false;
+        }
+        //FullTextArduino = "";
+        //LogTestToFile(CurrentClass, "Fire Executed\r");
+    }
+
+    static void WriteToArduino(string TextToSend)
+    {
+        FullTextArduino = "";
+        ArduinoPort.WriteLine(TextToSend);
+        WaitForSuccessfulArduinoCommand(TextToSend);
+        Thread.Sleep(1000);
     }
 }

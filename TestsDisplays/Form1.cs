@@ -235,6 +235,22 @@ namespace TestsDisplays
                     if (returnData.Equals("exit"))
                         _continue = false;
                 }
+                if (returnData.Contains("PWMVoltageAtPowerCycle:"))
+                {
+                    //ArmDisarm: Value: 9999999 Error: 9999988 Value2: 9999977 Error2: 9999966 EOL
+                    int testIndex = returnData.IndexOf("PWMVoltageAtPowerCycle:");
+                    int testLength = valueIndex - testIndex;
+                    int valueValue = Convert.ToInt32(returnData.Substring(valueIndex + 7, valueLength - 8));
+                    int errorValue = Convert.ToInt32(returnData.Substring(errorIndex + 7, errorLength - 8));
+                    int value2Value = Convert.ToInt32(returnData.Substring(value2Index + 7, value2Length - 8));
+                    int error2Value = Convert.ToInt32(returnData.Substring(error2Index + 7, error2Length - 8));
+                    PassedTest1textBox.Invoke(textBoxUpdateDelegate, new Object[] { valueValue.ToString(), PassedTest1textBox });
+                    FailedTests1textBox.Invoke(textBoxUpdateDelegate, new Object[] { errorValue.ToString(), FailedTests1textBox });
+                    passedTests3textBox.Invoke(textBoxUpdateDelegate, new Object[] { value2Value.ToString(), passedTests3textBox });
+                    failedTests2textBox.Invoke(textBoxUpdateDelegate, new Object[] { error2Value.ToString(), failedTests2textBox });
+                    if (returnData.Equals("exit"))
+                        _continue = false;
+                }
             }
             
         }
@@ -399,6 +415,20 @@ namespace TestsDisplays
                     failedTests2textBox.Visible = false;
                     TestNameParam = "PWMToRelaySoftReset";
                 }
+                if (typeIndex.Equals(11))
+                {
+                    label1.Text = "Hard Pwr cycle Passed:";
+                    label2.Text = "Hard Pwr cycle Failed:";
+                    TestName.Text = "PWM Signal & Voltage at Hard power cycle";
+                    TestName.Visible = true;
+                    PassedTests2label.Visible = true;
+                    failedTests2label.Visible = true;
+                    PassedTests2label.Text = "Relay Voltage Passed tests:";
+                    failedTests2label.Text = "Relay Voltage Failed tests:";
+                    passedTests3textBox.Visible = true;
+                    failedTests2textBox.Visible = true;
+                    TestNameParam = "PWMVoltageAtPowerCycle";
+                }
                 Thread writeThread = new Thread(() => WriteDataAsync(udpClient));
                 writeThread.Start();
                 strCmdText = "/C ConsoleSerialPortReader.exe " + TestNameParam + " "  + SMAComParam + " " + ArduinoComParam + " " + pname.Length.ToString();
@@ -461,6 +491,15 @@ namespace TestsDisplays
                                 "PSON is set to 1900,\r\n" +
                                 "PWM is set to 1,\r\n" +
                                 "ReadPWMWidthWithRC is loaded to arduino.", "Message");
+            }
+            if (TestTypecomboBox.SelectedIndex.Equals(11))
+            {
+                MessageBox.Show("Make sure:\r\n" +
+                                "PSTO is set to 20 seconds,\r\n" +
+                                "PSOF is set to 1000,\r\n" +
+                                "PSON is set to 1900,\r\n" +
+                                "PWM is set to 1,\r\n" +
+                                "ReadPWMWidthWithRCCommands is loaded to arduino.", "Message");
             }
         }
     }

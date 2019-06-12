@@ -67,8 +67,9 @@
             "Trigger Due to RC",
             "Arm At Init tests",
             "Test Auto Port",
-            "9. PWM @idle, arm & trigger ",
-            "10. PWM @soft reset"});
+            "9. Nano PWM @idle, arm & trigger ",
+            "10. Nano PWM @soft reset",
+            "11. Nano PWM & Voltage @Hard PWR Cycle"});
             this.TestTypecomboBox.Location = new System.Drawing.Point(47, 98);
             this.TestTypecomboBox.Name = "TestTypecomboBox";
             this.TestTypecomboBox.Size = new System.Drawing.Size(121, 21);
