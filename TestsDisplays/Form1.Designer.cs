@@ -43,6 +43,7 @@
             this.SMAPortbutton = new System.Windows.Forms.Button();
             this.ArduinoPortcomboBox = new System.Windows.Forms.ComboBox();
             this.ArduinoPortbutton = new System.Windows.Forms.Button();
+            this.ChannelIDLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // PassedTest1textBox
@@ -62,7 +63,12 @@
             "ArmDisarm",
             "Discharge",
             "XBT Disarm test",
-            "XBT Power Up"});
+            "XBT Power Up",
+            "Trigger Due to RC",
+            "Arm At Init tests",
+            "Test Auto Port",
+            "9. PWM @idle, arm & trigger ",
+            "10. PWM @soft reset"});
             this.TestTypecomboBox.Location = new System.Drawing.Point(47, 98);
             this.TestTypecomboBox.Name = "TestTypecomboBox";
             this.TestTypecomboBox.Size = new System.Drawing.Size(121, 21);
@@ -198,11 +204,21 @@
             this.ArduinoPortbutton.UseVisualStyleBackColor = true;
             this.ArduinoPortbutton.Click += new System.EventHandler(this.ArduinoPortbutton_Click);
             // 
+            // ChannelIDLabel
+            // 
+            this.ChannelIDLabel.AutoSize = true;
+            this.ChannelIDLabel.Location = new System.Drawing.Point(47, 133);
+            this.ChannelIDLabel.Name = "ChannelIDLabel";
+            this.ChannelIDLabel.Size = new System.Drawing.Size(63, 13);
+            this.ChannelIDLabel.TabIndex = 16;
+            this.ChannelIDLabel.Text = "Channel ID:";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(327, 332);
+            this.Controls.Add(this.ChannelIDLabel);
             this.Controls.Add(this.ArduinoPortbutton);
             this.Controls.Add(this.ArduinoPortcomboBox);
             this.Controls.Add(this.SMAPortbutton);
@@ -243,6 +259,7 @@
         private System.Windows.Forms.Button SMAPortbutton;
         private System.Windows.Forms.ComboBox ArduinoPortcomboBox;
         private System.Windows.Forms.Button ArduinoPortbutton;
+        private System.Windows.Forms.Label ChannelIDLabel;
     }
 }
 

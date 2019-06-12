@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SupportFunctions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -60,6 +61,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy /Y "$(TargetDir)" "C:\Nadav"</PostBuildEvent>
+    <PostBuildEvent>copy /Y "$(TargetDir)" "C:\Users\NADAV\source\repos\ConsoleApp1\TestsDisplays\bin\Debug"
+copy /Y "$(TargetDir)" "C:\Nadav"</PostBuildEvent>
   </PropertyGroup>
 </Project>

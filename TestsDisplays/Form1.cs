@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO.Ports;
 using System.Linq;
@@ -23,6 +24,10 @@ namespace TestsDisplays
         static UdpClient tesyUDP;
         static string ArduinoComParam = "";
         static string SMAComParam = "";
+        static string strCmdText = "";
+        static string TestNameParam = "";
+
+        static Process p;
 
 
         IPAddress localAddr = IPAddress.Parse("127.0.0.1");
@@ -42,6 +47,8 @@ namespace TestsDisplays
             InitializeComponent();
 
             textBoxUpdateDelegate = new AddDataDelegate(AddTextTotextBoxMethod);
+
+            TestTypecomboBox.SelectedIndexChanged += new EventHandler(TestTypeChange_Method);
 
             foreach (string s in SerialPort.GetPortNames())
             {
@@ -178,9 +185,56 @@ namespace TestsDisplays
                     passedTests3textBox.Invoke(textBoxUpdateDelegate, new Object[] { value2Value.ToString(), passedTests3textBox });
                     failedTests2textBox.Invoke(textBoxUpdateDelegate, new Object[] { error2Value.ToString(), failedTests2textBox });
                 }
-                if (returnData.Equals("exit"))
-                    _continue = false;
-                
+                //
+                if (returnData.Contains("TestAutoPort:"))
+                {
+                    //ArmDisarm: Value: 9999999 Error: 9999988 Value2: 9999977 Error2: 9999966 EOL
+                    int testIndex = returnData.IndexOf("TestAutoPort:");
+                    int testLength = valueIndex - testIndex;
+                    int valueValue = Convert.ToInt32(returnData.Substring(valueIndex + 7, valueLength - 8));
+                    int errorValue = Convert.ToInt32(returnData.Substring(errorIndex + 7, errorLength - 8));
+                    int value2Value = Convert.ToInt32(returnData.Substring(value2Index + 7, value2Length - 8));
+                    int error2Value = Convert.ToInt32(returnData.Substring(error2Index + 7, error2Length - 8));
+                    PassedTest1textBox.Invoke(textBoxUpdateDelegate, new Object[] { valueValue.ToString(), PassedTest1textBox });
+                    FailedTests1textBox.Invoke(textBoxUpdateDelegate, new Object[] { errorValue.ToString(), FailedTests1textBox });
+                    passedTests3textBox.Invoke(textBoxUpdateDelegate, new Object[] { value2Value.ToString(), passedTests3textBox });
+                    failedTests2textBox.Invoke(textBoxUpdateDelegate, new Object[] { error2Value.ToString(), failedTests2textBox });
+                    if (returnData.Equals("exit"))
+                        _continue = false;
+                }
+
+                if (returnData.Contains("PWMToRelay:"))
+                {
+                    //ArmDisarm: Value: 9999999 Error: 9999988 Value2: 9999977 Error2: 9999966 EOL
+                    int testIndex = returnData.IndexOf("PWMToRelay:");
+                    int testLength = valueIndex - testIndex;
+                    int valueValue = Convert.ToInt32(returnData.Substring(valueIndex + 7, valueLength - 8));
+                    int errorValue = Convert.ToInt32(returnData.Substring(errorIndex + 7, errorLength - 8));
+                    int value2Value = Convert.ToInt32(returnData.Substring(value2Index + 7, value2Length - 8));
+                    int error2Value = Convert.ToInt32(returnData.Substring(error2Index + 7, error2Length - 8));
+                    PassedTest1textBox.Invoke(textBoxUpdateDelegate, new Object[] { valueValue.ToString(), PassedTest1textBox });
+                    FailedTests1textBox.Invoke(textBoxUpdateDelegate, new Object[] { errorValue.ToString(), FailedTests1textBox });
+                    passedTests3textBox.Invoke(textBoxUpdateDelegate, new Object[] { value2Value.ToString(), passedTests3textBox });
+                    failedTests2textBox.Invoke(textBoxUpdateDelegate, new Object[] { error2Value.ToString(), failedTests2textBox });
+                    if (returnData.Equals("exit"))
+                        _continue = false;
+                }
+                if (returnData.Contains("PWMToRelaySoftReset:"))
+                {
+                    //ArmDisarm: Value: 9999999 Error: 9999988 Value2: 9999977 Error2: 9999966 EOL
+                    int testIndex = returnData.IndexOf("PWMToRelaySoftReset:");
+                    int testLength = valueIndex - testIndex;
+                    int valueValue = Convert.ToInt32(returnData.Substring(valueIndex + 7, valueLength - 8));
+                    int errorValue = Convert.ToInt32(returnData.Substring(errorIndex + 7, errorLength - 8));
+                    int value2Value = Convert.ToInt32(returnData.Substring(value2Index + 7, value2Length - 8));
+                    int error2Value = Convert.ToInt32(returnData.Substring(error2Index + 7, error2Length - 8));
+                    PassedTest1textBox.Invoke(textBoxUpdateDelegate, new Object[] { valueValue.ToString(), PassedTest1textBox });
+                    FailedTests1textBox.Invoke(textBoxUpdateDelegate, new Object[] { errorValue.ToString(), FailedTests1textBox });
+                    passedTests3textBox.Invoke(textBoxUpdateDelegate, new Object[] { value2Value.ToString(), passedTests3textBox });
+                    failedTests2textBox.Invoke(textBoxUpdateDelegate, new Object[] { error2Value.ToString(), failedTests2textBox });
+                    if (returnData.Equals("exit"))
+                        _continue = false;
+                }
             }
             
         }
@@ -193,14 +247,18 @@ namespace TestsDisplays
         private void buttonStart_Click(object sender, EventArgs e)
         {
             int typeIndex = TestTypecomboBox.SelectedIndex;
+            //string TestNameForStartup = "";
             //UdpClient udpClient = new UdpClient(localBasePort + typeIndex);
-            
+            Process[] pname = Process.GetProcessesByName("TestsDisplays");
             if (buttonStart.Text.Equals("Start"))
             {
                 _continue = true;
                 buttonStart.Text = "Stop";
-                udpClient = new UdpClient(localBasePort + typeIndex);
-                udpClient.Connect(localAddr, remoteBasePort + typeIndex);
+                ChannelIDLabel.Text = "Channel ID: " + pname.Length.ToString();
+                //udpClient = new UdpClient(localBasePort + typeIndex);
+                //udpClient.Connect(localAddr, remoteBasePort + typeIndex);
+                udpClient = new UdpClient(localBasePort + pname.Length);
+                udpClient.Connect(localAddr, remoteBasePort + pname.Length);
                 if (typeIndex.Equals(0))// PWM and Cutoff signal
                 {
                     label1.Text = "PWM Passed tests:";
@@ -214,6 +272,8 @@ namespace TestsDisplays
 
                     TestName.Text = "Motor cutoff signal and PWM length test";
                     TestName.Visible = true;
+                    TestNameParam = "MotorSignalDetection";
+
                 }
                 if (typeIndex.Equals(1)) // Modes
                 {
@@ -225,6 +285,7 @@ namespace TestsDisplays
                     failedTests2label.Visible = false;
                     passedTests3textBox.Visible = false;
                     failedTests2textBox.Visible = false;
+                    TestNameParam = "Modes";
                 }
                 if (typeIndex.Equals(2))
                 {
@@ -236,6 +297,7 @@ namespace TestsDisplays
                     failedTests2label.Visible = false;
                     passedTests3textBox.Visible = false;
                     failedTests2textBox.Visible = false;
+                    TestNameParam = "ArmDisarm";
                 }
                 if (typeIndex.Equals(3))
                 {
@@ -247,6 +309,7 @@ namespace TestsDisplays
                     failedTests2label.Visible = false;
                     passedTests3textBox.Visible = false;
                     failedTests2textBox.Visible = false;
+                    TestNameParam = "Discharge";
                 }
                 if (typeIndex.Equals(4))
                 {
@@ -258,6 +321,7 @@ namespace TestsDisplays
                     failedTests2label.Visible = false;
                     passedTests3textBox.Visible = false;
                     failedTests2textBox.Visible = false;
+                    TestNameParam = "XBTTest";
                 }
                 if (typeIndex.Equals(5))
                 {
@@ -269,6 +333,7 @@ namespace TestsDisplays
                     failedTests2label.Visible = false;
                     passedTests3textBox.Visible = false;
                     failedTests2textBox.Visible = false;
+                    TestNameParam = "XBTTestPowerUp";
                 }
                 if (typeIndex.Equals(6))
                 {
@@ -280,17 +345,80 @@ namespace TestsDisplays
                     failedTests2label.Visible = false;
                     passedTests3textBox.Visible = false;
                     failedTests2textBox.Visible = false;
+                    TestNameParam = "ArmAtStartUp";
+                }
+                if (typeIndex.Equals(7))
+                {
+                    label1.Text = "Passed tests:";
+                    label2.Text = "Failed tests:";
+                    TestName.Text = "Trigger Due to RC";
+                    TestName.Visible = true;
+                    PassedTests2label.Visible = false;
+                    failedTests2label.Visible = false;
+                    passedTests3textBox.Visible = false;
+                    failedTests2textBox.Visible = false;
+                    TestNameParam = "ArmAtStartUp";
+                }
+                if (typeIndex.Equals(8))
+                {
+                    label1.Text = "Passed tests:";
+                    label2.Text = "Failed tests:";
+                    TestName.Text = "Trigger Due to RC";
+                    TestName.Visible = true;
+                    PassedTests2label.Visible = false;
+                    failedTests2label.Visible = false;
+                    passedTests3textBox.Visible = false;
+                    failedTests2textBox.Visible = false;
+                    TestNameParam = "TestAutoPort";
+                }
+                if (typeIndex.Equals(9))
+                {
+                    label1.Text = "Idle & Arm Passed tests:";
+                    label2.Text = "Idle & Arm Failed tests:";
+                    TestName.Text = "PWM Signal to Relay";
+                    TestName.Visible = true;
+                    PassedTests2label.Visible = true;
+                    failedTests2label.Visible = true;
+                    PassedTests2label.Text = "Trigger Passed tests:";
+                    failedTests2label.Text = "Trigger Failed tests:";
+                    passedTests3textBox.Visible = true;
+                    failedTests2textBox.Visible = true;
+                    TestNameParam = "PWMToRelay";
+                }
+                if (typeIndex.Equals(10))
+                {
+                    label1.Text = "Soft reset Passed tests:";
+                    label2.Text = "Soft reset Failed tests:";
+                    TestName.Text = "PWM @Soft reset";
+                    TestName.Visible = true;
+                    PassedTests2label.Visible = false;
+                    failedTests2label.Visible = false;
+                    PassedTests2label.Text = "Trigger Passed tests:";
+                    failedTests2label.Text = "Trigger Failed tests:";
+                    passedTests3textBox.Visible = false;
+                    failedTests2textBox.Visible = false;
+                    TestNameParam = "PWMToRelaySoftReset";
                 }
                 Thread writeThread = new Thread(() => WriteDataAsync(udpClient));
                 writeThread.Start();
+                strCmdText = "/C ConsoleSerialPortReader.exe " + TestNameParam + " "  + SMAComParam + " " + ArduinoComParam + " " + pname.Length.ToString();
+                Process p = Process.Start("CMD.exe", strCmdText);
 
             }
             else if (buttonStart.Text.Equals("Stop"))
             {
+                /*Process[] W = Process.GetProcesses();
+                foreach (Process w in W)
+                {
+                    if (w.ProcessName.Equals("ConsoleSerialPortReader"))
+                    {
+                        w.Kill()
+                    }
+                    //TestTypecomboBox.Items.Add(w.ProcessName);
+                }*/
                 _continue = false;
                 buttonStart.Text = "Start";
                 udpClient.Close();
-
             }
         }
 
@@ -306,12 +434,34 @@ namespace TestsDisplays
 
         private void ArduinoPortbutton_Click(object sender, EventArgs e)
         {
-            ArduinoComParam = ArduinoPortcomboBox.SelectedText;
+            ArduinoComParam = ArduinoPortcomboBox.Text;
         }
 
         private void SMAPortbutton_Click(object sender, EventArgs e)
         {
-            SMAComParam = SmartAirPortcomboBox.SelectedText;
+            SMAComParam = SmartAirPortcomboBox.Text;
+        }
+
+        private void TestTypeChange_Method(object sender, EventArgs e)
+        {
+            if (TestTypecomboBox.SelectedIndex.Equals(9))
+            {
+                MessageBox.Show("Make sure:\r\n" +
+                                "PSTO is set to 20 seconds,\r\n" +
+                                "PSOF is set to 1000,\r\n" +
+                                "PSON is set to 1900,\r\n" +
+                                "PWM is set to 1,\r\n" +
+                                "ReadPWMWidthWithRC is loaded to arduino.", "Message");
+            }
+
+            if (TestTypecomboBox.SelectedIndex.Equals(10))
+            {
+                MessageBox.Show("Make sure:\r\n" +
+                                "PSOF is set to 1000,\r\n" +
+                                "PSON is set to 1900,\r\n" +
+                                "PWM is set to 1,\r\n" +
+                                "ReadPWMWidthWithRC is loaded to arduino.", "Message");
+            }
         }
     }
 }
