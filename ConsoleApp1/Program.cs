@@ -290,6 +290,7 @@ public class PortChat
                     //readThread.Suspend();
                     //
                     WriteToArduino("PWRUP");
+                    WriteToArduino("PWMREAD");
                     Thread.Sleep(5000);
                     //_serialPort.Open();
                     //readThread.Resume();
@@ -298,7 +299,10 @@ public class PortChat
                     readThread.Start();
                 }
                 if (stringComparer.Equals("PWRDWN", message))
+                {
                     WriteToArduino("PWRDWN");
+                    WriteToArduino("PWMREAD");
+                }
             }
         }
 
@@ -987,6 +991,7 @@ public class PortChat
                     stopWatch.Start();
                 if (FullTextSmartAir.Contains(": Finished successfully"))
                 {
+                    WriteToArduino("PWMREADStop");
                     FullTextSmartAir = "";
                     log.Debug("SmartAir finished initialization.");
 
@@ -1011,7 +1016,9 @@ public class PortChat
                     Thread.Sleep(2000);
                     FullTextArduino = "";
                     WriteToArduino("TSTVLTG");
-                    if (FullTextArduino.Contains("Voltage #0"))
+                    int VoltIndex = FullTextArduino.IndexOf("Voltage #");
+                    double VoltVal = Convert.ToDouble(FullTextArduino.Substring(VoltIndex + 9,3));
+                    if (VoltVal < 0.6)
                     {
                         
                     }
@@ -1021,8 +1028,10 @@ public class PortChat
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Relay Voltage during hard power up trigger failed. #:" + General_Counter_Error.ToString());
                         Console.ResetColor();
-                        log.Error("Relay Voltage during hard power up trigger failed. #:" + General_Counter_Error.ToString());
+                        log.Error("Relay Voltage during hard power up failed. " + FullTextArduino);
+                        log.Error("Relay Voltage during hard power up failed. #:" + General_Counter_Error.ToString());
                     }
+                    WriteToArduino("PWMREAD");
                     WriteToSmartAir("atg");
                     WriteToSmartAir("fire");
                     stopWatch.Restart();
@@ -1033,13 +1042,15 @@ public class PortChat
                     log.Debug("Reset SmartAir in 25 seconds ");
                     FullTextArduino = "";
                     WriteToArduino("TSTVLTG");
-                    if (FullTextArduino.Contains("Voltage #5"))
+                    int VoltIndex = FullTextArduino.IndexOf("Voltage #");
+                    double VoltVal = Convert.ToDouble(FullTextArduino.Substring(VoltIndex + 9, 3));
+                    if (VoltVal > 4.6)
                     {
                         General_Counter++;
                         Console.ForegroundColor = ConsoleColor.Blue;
                         Console.WriteLine("Relay Voltage after trigger passed. #:" + General_Counter.ToString());
                         Console.ResetColor();
-                        log.Error("Relay Voltage after trigger passed. #:" + General_Counter.ToString());
+                        log.Debug("Relay Voltage after trigger passed. #:" + General_Counter.ToString());
                     }
                     else
                     {
@@ -1047,12 +1058,14 @@ public class PortChat
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Relay Voltage after trigger failed. #:" + General_Counter_Error.ToString());
                         Console.ResetColor();
+                        log.Error("Relay Voltage after trigger failed. " + FullTextArduino);
                         log.Error("Relay Voltage after trigger failed. #:" + General_Counter_Error.ToString());
                     }
-
+                    
                     Thread.Sleep(25000);
                     FullTextArduino = "";
                     WriteToArduino("PWRDWN");
+                    WriteToArduino("PWMREAD");
 
                     TrueOrFalse = FullStringPWMLengthConvertor(1050, false);
                     if (TrueOrFalse)
@@ -1071,9 +1084,11 @@ public class PortChat
                         Console.ResetColor();
                         log.Error("PWM Length at hard reset failed. #:" + PWM_width_error_Counter.ToString());
                     }
+                    WriteToArduino("PWMREADStop");
                     Thread.Sleep(2000);
                     WriteToArduino("PWRUP");
                     Thread.Sleep(5000);
+                    WriteToArduino("PWMREAD");
                     _serialPort.Open();
                     stopWatch.Restart();
                 }
@@ -1241,7 +1256,7 @@ public class PortChat
         ArduinoPort.DataBits = 8;
         ArduinoPort.StopBits = (StopBits)1;
         ArduinoPort.Handshake = 0;
-        ArduinoPort.ReadBufferSize = 30000;
+        ArduinoPort.ReadBufferSize = 9000000;
         ArduinoPort.Open();
 
         ArduinoPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedFromArduinoHandler);
@@ -1420,7 +1435,7 @@ public class PortChat
         string LocalText = "";
         LocalText = FullTextArduino;
         int PWMLengthIndex = 0;
-        while (LocalText.Length > 50)
+        while ( (LocalText.Contains("PWM Pulse Width: ")) && (LocalText.Length > 50) && (LocalText.IndexOf("PWM Pulse Width: ") < 30))
         {
             try
             {
@@ -1453,19 +1468,22 @@ public class PortChat
     static void WaitForSuccessfulArduinoCommand(string TextToFind)
     {
         WaitForInit = true;
+        Console.WriteLine("@@@Started waiting for Arduino");
         //Thread.Sleep(250);
         while (WaitForInit)
         {
-            if (FullTextArduino.Contains(TextToFind))
+            if (FullTextArduino.Contains(TextToFind + "Ended"))
                 WaitForInit = false;
         }
         //FullTextArduino = "";
         //LogTestToFile(CurrentClass, "Fire Executed\r");
+        Console.WriteLine("@@@Stoped waiting for Arduino");
     }
 
     static void WriteToArduino(string TextToSend)
     {
         FullTextArduino = "";
+        Console.WriteLine("Sending To Arduino: " + TextToSend);
         ArduinoPort.WriteLine(TextToSend);
         WaitForSuccessfulArduinoCommand(TextToSend);
         Thread.Sleep(1000);

@@ -4,13 +4,13 @@
 //Arduino PIN  ---- Other Devices pin
 
 // 2  (PWM)   ----  SmartAir Servo Signal
+// GND        ----  SmartAir Servo GND
 // 4  (PWM)   ----  SmartAir ARM PIN
 // 13 (PWM)   ----  SmartAir Trigger PIN
 // 6  (PWM)   ----  SmartAir Relay EN1
 // GND        ----  SmartAir Servo GND
 // 5V         ----  Relay 5V
 // AO         ----  Between two voltage devider resistor (check voltage is lower than 5V at trigger)
-// Additional Connections to Relay are required 
 String inputString = "";         // a String to hold incoming data
 String inputString2 = "";
 
@@ -28,6 +28,7 @@ volatile unsigned long Previous_Zero_Changes_Counter;
 volatile float Previous_Voltage;
 float multi = 1.6;
 int i;
+int DeathCounter;
 
 boolean PWMwasInLow = true;
 boolean PWMwasInHigh = true;
@@ -52,6 +53,12 @@ void calcSignal2()
         //{
           Serial.print("PWM Pulse Width: " );
           Serial.println(pulse_width);
+          DeathCounter++;
+          if (DeathCounter==1000)
+          {
+            DeathCounter = 0;
+            detachInterrupt(digitalPinToInterrupt(CHANNEL_2_PIN)); 
+          }
           //printPulseWidth = false;
         //}
         //Serial.println("Motor Signal Low");        
@@ -83,7 +90,7 @@ void setup() {
   // reserve 200 bytes for the inputString:
   inputString2.reserve(200);
 
-  attachInterrupt(digitalPinToInterrupt(CHANNEL_2_PIN), calcSignal2, CHANGE);
+  //attachInterrupt(digitalPinToInterrupt(CHANNEL_2_PIN), calcSignal2, CHANGE);
 }
 
 void loop() {
@@ -259,33 +266,72 @@ void serialEvent()
 
     if (TmpStr.indexOf("PWRUP") >= 0)
     {
+      Serial.println("exec PWRUP");
+      detachInterrupt(digitalPinToInterrupt(CHANNEL_2_PIN));
       Zero_Changes_Counter = 0;
       Previous_Zero_Changes_Counter = 0;
       Zero_Changes_Counter = 0;
-      Serial.println("exec PWRUP");
-      LowPWM();
+      
+      //LowPWM();
       digitalWrite(6, HIGH);
+      Serial.println("PWRUPEnded");
     }
     if (TmpStr.indexOf("PWRDWN") >= 0)
     {
+      Serial.println("exec PWRDWN");
+      detachInterrupt(digitalPinToInterrupt(CHANNEL_2_PIN));
       Zero_Changes_Counter = 0;
       Previous_Zero_Changes_Counter = 0;
       Zero_Changes_Counter = 0;
-      Serial.println("exec PWRDWN");
-      LowPWM();
+      
+      //LowPWM();
       digitalWrite(6, LOW);
+      delay(2000);
+      Serial.println("PWRDWNEnded");
     }
 
     if (TmpStr.indexOf("TSTVLTG") >= 0)
     {
+      Serial.println("exec TSTVLTG");
+      detachInterrupt(digitalPinToInterrupt(CHANNEL_2_PIN)); 
+      delay(2000);
+      //Serial.flush();
       Zero_Changes_Counter = 0;
       Previous_Zero_Changes_Counter = 0;
       Zero_Changes_Counter = 0;
-      Serial.println("exec TSTVLTG");
-      LowPWM();
-      detachInterrupt(digitalPinToInterrupt(CHANNEL_2_PIN));
+      
+      //LowPWM();
+
       voltageMeasurement();
+      Serial.println("TSTVLTGEnded");
+      delay(2000);
+
+    }
+
+    if (TmpStr.indexOf("PWMREAD") >= 0)
+    {
+      Serial.println("exec PWMREAD");
+      Zero_Changes_Counter = 0;
+      Previous_Zero_Changes_Counter = 0;
+      Zero_Changes_Counter = 0;
+      
+      //LowPWM();
+      delay(2000);
+      Serial.println("PWMREADEnded");
       attachInterrupt(digitalPinToInterrupt(CHANNEL_2_PIN), calcSignal2, CHANGE);
+    }
+
+    if (TmpStr.indexOf("PWMREADStop") >= 0)
+    {
+      Serial.println("exec PWMREADStop");
+      detachInterrupt(digitalPinToInterrupt(CHANNEL_2_PIN)); 
+      Zero_Changes_Counter = 0;
+      Previous_Zero_Changes_Counter = 0;
+      Zero_Changes_Counter = 0;
+      
+      //LowPWM();
+      delay(2000);
+      Serial.println("PWMREADStopEnded");
     }
   }
 }
