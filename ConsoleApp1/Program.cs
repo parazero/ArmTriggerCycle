@@ -291,10 +291,19 @@ public class PortChat
                     //
                     WriteToArduino("PWRUP");
                     WriteToArduino("PWMREAD");
-                    Thread.Sleep(5000);
+                    ColoerdTimer(5000);
                     //_serialPort.Open();
                     //readThread.Resume();
-                    _serialPort.Open();
+                    try
+                    {
+                        _serialPort.Open();
+                    }
+                    catch (Exception ex)
+                    {
+                        log.Error("SmartAir Port failed.");
+                        log.Error(ex);
+                        ResetSmartAir();
+                    }
 
                     readThread.Start();
                 }
@@ -308,6 +317,14 @@ public class PortChat
 
         readThread.Join();
         _serialPort.Close();
+    }
+
+    private static void ResetSmartAir()
+    {
+        WriteToArduino("PWMREADStop");
+        WriteToArduino("PWRDWN");
+        ColoerdTimer(3000);
+        WriteToArduino("PWRUP");
     }
 
     public static void Read(UdpClient udpClient)
@@ -904,7 +921,7 @@ public class PortChat
                         log.Error("PWM Length after trigger failed. #:" + General_Counter_Error.ToString());
                     }
                     
-                    Thread.Sleep(5000);
+                    ColoerdTimer(5000);
                     WriteToSmartAir("rst");
                     stopWatch.Reset();
                 }
@@ -1017,19 +1034,30 @@ public class PortChat
                     FullTextArduino = "";
                     WriteToArduino("TSTVLTG");
                     int VoltIndex = FullTextArduino.IndexOf("Voltage #");
-                    double VoltVal = Convert.ToDouble(FullTextArduino.Substring(VoltIndex + 9,3));
-                    if (VoltVal < 0.6)
+                    if (!VoltIndex.Equals(-1))
                     {
-                        
+                        double VoltVal = Convert.ToDouble(FullTextArduino.Substring(VoltIndex + 9, 3));
+                        if (VoltVal < 0.6)
+                        {
+
+                        }
+                        else
+                        {
+                            General_Counter_Error++;
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Relay Voltage during hard power up trigger failed. #:" + General_Counter_Error.ToString());
+                            Console.ResetColor();
+                            log.Error("Relay Voltage during hard power up failed. " + FullTextArduino);
+                            log.Error("Relay Voltage during hard power up failed. #:" + General_Counter_Error.ToString());
+                        }
                     }
                     else
                     {
-                        General_Counter_Error++;
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Relay Voltage during hard power up trigger failed. #:" + General_Counter_Error.ToString());
+                        Console.WriteLine("Arduino Failed, Skiiped Cycle");
                         Console.ResetColor();
                         log.Error("Relay Voltage during hard power up failed. " + FullTextArduino);
-                        log.Error("Relay Voltage during hard power up failed. #:" + General_Counter_Error.ToString());
+                        log.Error("Arduino Failed, Skiiped Cycle");
                     }
                     WriteToArduino("PWMREAD");
                     WriteToSmartAir("atg");
@@ -1043,26 +1071,37 @@ public class PortChat
                     FullTextArduino = "";
                     WriteToArduino("TSTVLTG");
                     int VoltIndex = FullTextArduino.IndexOf("Voltage #");
-                    double VoltVal = Convert.ToDouble(FullTextArduino.Substring(VoltIndex + 9, 3));
-                    if (VoltVal > 4.6)
+                    if (!VoltIndex.Equals(-1))
                     {
-                        General_Counter++;
-                        Console.ForegroundColor = ConsoleColor.Blue;
-                        Console.WriteLine("Relay Voltage after trigger passed. #:" + General_Counter.ToString());
-                        Console.ResetColor();
-                        log.Debug("Relay Voltage after trigger passed. #:" + General_Counter.ToString());
+                        double VoltVal = Convert.ToDouble(FullTextArduino.Substring(VoltIndex + 9, 3));
+                        if (VoltVal > 4.6)
+                        {
+                            General_Counter++;
+                            Console.ForegroundColor = ConsoleColor.Blue;
+                            Console.WriteLine("Relay Voltage after trigger passed. #:" + General_Counter.ToString());
+                            Console.ResetColor();
+                            log.Debug("Relay Voltage after trigger passed. #:" + General_Counter.ToString());
+                        }
+                        else
+                        {
+                            General_Counter_Error++;
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Relay Voltage after trigger failed. #:" + General_Counter_Error.ToString());
+                            Console.ResetColor();
+                            log.Error("Relay Voltage after trigger failed. " + FullTextArduino);
+                            log.Error("Relay Voltage after trigger failed. #:" + General_Counter_Error.ToString());
+                        }
                     }
                     else
                     {
-                        General_Counter_Error++;
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Relay Voltage after trigger failed. #:" + General_Counter_Error.ToString());
+                        Console.WriteLine("Arduino Failed, Skiiped Cycle");
                         Console.ResetColor();
                         log.Error("Relay Voltage after trigger failed. " + FullTextArduino);
-                        log.Error("Relay Voltage after trigger failed. #:" + General_Counter_Error.ToString());
+                        log.Error("Arduino Failed, Skiiped Cycle");
                     }
                     
-                    Thread.Sleep(25000);
+                    ColoerdTimer(18000);
                     FullTextArduino = "";
                     WriteToArduino("PWRDWN");
                     WriteToArduino("PWMREAD");
@@ -1089,7 +1128,17 @@ public class PortChat
                     WriteToArduino("PWRUP");
                     Thread.Sleep(5000);
                     WriteToArduino("PWMREAD");
-                    _serialPort.Open();
+                    if (!_serialPort.IsOpen)
+                        try
+                        {
+                            _serialPort.Open();
+                        }
+                        catch (Exception ex)
+                        {
+                            log.Error("SmartAir Port failed.");
+                            log.Error(ex);
+                            ResetSmartAir();
+                        }
                     stopWatch.Restart();
                 }
                 ts = stopWatch.Elapsed;
@@ -1403,11 +1452,20 @@ public class PortChat
 
     static void WriteToSmartAir(string TextToSend)
     {
-        if (_serialPort.IsOpen)
+        try
         {
-            _serialPort.WriteLine("\r");
-            _serialPort.WriteLine(TextToSend + "\r");
-            Thread.Sleep(SleepAfterWriteLineEvent);
+            if (_serialPort.IsOpen)
+            {
+                _serialPort.WriteLine("\r");
+                _serialPort.WriteLine(TextToSend + "\r");
+                Thread.Sleep(SleepAfterWriteLineEvent);
+            }
+        }
+        catch (Exception ex)
+        {
+            log.Error("SmartAir Port failed.");
+            log.Error(ex);
+            ResetSmartAir();
         }
 
     }
@@ -1467,6 +1525,10 @@ public class PortChat
 
     static void WaitForSuccessfulArduinoCommand(string TextToFind)
     {
+        int j = 0;
+        Stopwatch LocalSW = new Stopwatch();
+        TimeSpan LocalTS;
+        LocalSW.Start();
         WaitForInit = true;
         Console.WriteLine("@@@Started waiting for Arduino");
         //Thread.Sleep(250);
@@ -1474,6 +1536,21 @@ public class PortChat
         {
             if (FullTextArduino.Contains(TextToFind + "Ended"))
                 WaitForInit = false;
+            LocalTS = LocalSW.Elapsed;
+            if (LocalTS.TotalSeconds > 15)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("Arduino Failed To Respond.");
+                Console.ResetColor();
+                log.ErrorFormat("Arduino Failed To Respond.");
+                for (j=0;j<3;j++)
+                {
+                    ArduinoPort.WriteLine("PWMREADStop");
+                    Thread.Sleep(500);
+                }
+                break;
+            }
+                
         }
         //FullTextArduino = "";
         //LogTestToFile(CurrentClass, "Fire Executed\r");
@@ -1487,5 +1564,31 @@ public class PortChat
         ArduinoPort.WriteLine(TextToSend);
         WaitForSuccessfulArduinoCommand(TextToSend);
         Thread.Sleep(1000);
+    }
+    static void ColoerdTimer(int TimeToWaitInMiliSeconds)
+    {
+        Stopwatch LocalSW = new Stopwatch();
+        TimeSpan LocalTS, LastLocalTS;
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine(TimeToWaitInMiliSeconds + " milliseconds timer started.");
+        Console.ResetColor();
+        LocalSW.Start();
+        LastLocalTS = LocalSW.Elapsed;
+        LocalTS = LocalSW.Elapsed;
+        while (LocalTS.TotalMilliseconds < TimeToWaitInMiliSeconds)
+        {
+            Thread.Sleep(100);
+            if (LocalTS.TotalMilliseconds - LastLocalTS.TotalMilliseconds > 1000)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.Write(LocalTS.TotalSeconds.ToString() + "\r");
+                Console.ResetColor();
+                LastLocalTS = LocalTS;
+            }
+            LocalTS = LocalSW.Elapsed;
+        }
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine("Timer Expired");
+        Console.ResetColor();
     }
 }
