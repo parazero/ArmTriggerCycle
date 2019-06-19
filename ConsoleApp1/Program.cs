@@ -739,7 +739,7 @@ public class PortChat
                 {
                     log.Debug("Wait 45 seconds");
                     Thread.Sleep(45000);
-                    string messageLeftOver = _serialPort.ReadExisting();
+                    string messageLeftOver = _serialPort.ReadExisting();//TODO: Check if it is need to access through message
                     if (!messageLeftOver.Contains(": Finished successfully"))
                     {
                         XBT_disarm_Counter++;
@@ -878,7 +878,9 @@ public class PortChat
                         Console.ResetColor();
                         log.Error("PWM Length at idle failed. #:" + PWM_width_error_Counter.ToString());
                     }
+                    FullTextSmartAir = "";
                     WriteToSmartAir("atg");
+                    WaitForText("!System.....................: ARMED");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
                     PWMLength = PWMLengthConvertor();
@@ -898,7 +900,9 @@ public class PortChat
                         Console.ResetColor();
                         log.Error("PWM Length after arm failed. #:" + PWM_width_error_Counter.ToString());
                     }
+                    FullTextSmartAir = "";
                     WriteToSmartAir("fire");
+                    WaitForText("SWITCH MOTOR_OFF");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
                     stopWatch.Restart();
@@ -1440,6 +1444,32 @@ public class PortChat
         //LogTestToFile(CurrentClass, "Mode Sequence Ended\r");
     }
 
+    static void WaitForText(string TextToSearch)
+    {
+        WaitForInit = true;
+        Stopwatch resetStopWatch = new Stopwatch();
+        resetStopWatch.Start();
+        //Thread.Sleep(250);
+        TimeSpan ts = resetStopWatch.Elapsed;
+        while ((WaitForInit) && ts.TotalMilliseconds <= 35000)
+        {
+            ts = resetStopWatch.Elapsed;
+            if (FullTextSmartAir.Contains(TextToSearch))
+                WaitForInit = false;
+            if (_serialPort.BytesToRead>0)
+            {
+                message = _serialPort.ReadExisting();
+                FullTextSmartAir += message; 
+            }
+        }
+        if (WaitForInit)
+        {
+            Console.WriteLine("###SmartAir Did not Reply.");
+            log.Error("###SmartAir Did not Reply.");
+        }
+        Thread.Sleep(SleepDurationAfterBoardInitMethod);
+    }
+
     static void DataReceivedFromArduinoHandler(object sender, SerialDataReceivedEventArgs e)
     {
         SerialPort sp = (SerialPort)sender;
@@ -1456,6 +1486,7 @@ public class PortChat
         {
             if (_serialPort.IsOpen)
             {
+                Console.WriteLine("Command sent to SmartAir: " + TextToSend);
                 _serialPort.WriteLine("\r");
                 _serialPort.WriteLine(TextToSend + "\r");
                 Thread.Sleep(SleepAfterWriteLineEvent);
@@ -1465,7 +1496,7 @@ public class PortChat
         {
             log.Error("SmartAir Port failed.");
             log.Error(ex);
-            ResetSmartAir();
+            //ResetSmartAir();
         }
 
     }
