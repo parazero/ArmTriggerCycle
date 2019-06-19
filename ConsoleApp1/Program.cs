@@ -12,6 +12,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using ConsoleSerialPortReader;
+using System.Net.Mail;
 
 public class PortChat
 {
@@ -302,7 +303,17 @@ public class PortChat
                     {
                         log.Error("SmartAir Port failed.");
                         log.Error(ex);
-                        ResetSmartAir();
+                        if (ex.Message.Contains("Access to the port is denied"))
+                        {
+                            ResetSmartAir();
+                        }
+                        else
+                        {
+                            WriteToArduino("PWMREADStop");
+                            WriteToArduino("PWRDWN");
+                            ColoerdTimer(3000);
+                            WriteToArduino("PWRUP");
+                        }
                     }
 
                     readThread.Start();
@@ -323,7 +334,9 @@ public class PortChat
     {
         WriteToArduino("PWMREADStop");
         WriteToArduino("PWRDWN");
+        _serialPort.Close();
         ColoerdTimer(3000);
+        _serialPort.Open();
         WriteToArduino("PWRUP");
     }
 
@@ -1141,7 +1154,17 @@ public class PortChat
                         {
                             log.Error("SmartAir Port failed.");
                             log.Error(ex);
-                            ResetSmartAir();
+                            if (ex.Message.Contains("Access to the port is denied"))
+                            {
+                                ResetSmartAir();
+                            }
+                            else
+                            {
+                                WriteToArduino("PWMREADStop");
+                                WriteToArduino("PWRDWN");
+                                ColoerdTimer(3000);
+                                WriteToArduino("PWRUP");
+                            }
                         }
                     stopWatch.Restart();
                 }
@@ -1496,7 +1519,18 @@ public class PortChat
         {
             log.Error("SmartAir Port failed.");
             log.Error(ex);
-            //ResetSmartAir();
+            if (ex.Message.Contains("Access to the port is denied"))
+            {
+                ResetSmartAir();
+            }
+            else
+            {
+                WriteToArduino("PWMREADStop");
+                WriteToArduino("PWRDWN");
+                ColoerdTimer(3000);
+                WriteToArduino("PWRUP");
+            }
+            
         }
 
     }
@@ -1621,5 +1655,21 @@ public class PortChat
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine("Timer Expired");
         Console.ResetColor();
+    }
+    private void SendMail(string SendTo, string MailSubject, string MailBody)
+    {
+        MailMessage mail = new MailMessage();
+        SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
+
+        mail.From = new MailAddress("parazeroauto@gmail.com");
+        mail.To.Add(SendTo);
+        mail.Subject = MailSubject;
+        mail.Body = MailBody;
+
+        SmtpServer.Port = 587;
+        SmtpServer.Credentials = new System.Net.NetworkCredential("parazeroauto", "fdfdfd3030");
+        SmtpServer.EnableSsl = true;
+
+        SmtpServer.Send(mail);
     }
 }
