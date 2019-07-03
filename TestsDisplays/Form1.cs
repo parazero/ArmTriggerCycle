@@ -265,16 +265,17 @@ namespace TestsDisplays
             int typeIndex = TestTypecomboBox.SelectedIndex;
             //string TestNameForStartup = "";
             //UdpClient udpClient = new UdpClient(localBasePort + typeIndex);
-            Process[] pname = Process.GetProcessesByName("TestsDisplays");
+            Process currentProcess = Process.GetCurrentProcess();
+            //Process[] pname = Process.GetProcessesByName("TestsDisplays");
             if (buttonStart.Text.Equals("Start"))
             {
                 _continue = true;
                 buttonStart.Text = "Stop";
-                ChannelIDLabel.Text = "Channel ID: " + pname.Length.ToString();
+                ChannelIDLabel.Text = "Channel ID: " + currentProcess.Id.ToString();
                 //udpClient = new UdpClient(localBasePort + typeIndex);
                 //udpClient.Connect(localAddr, remoteBasePort + typeIndex);
-                udpClient = new UdpClient(localBasePort + pname.Length);
-                udpClient.Connect(localAddr, remoteBasePort + pname.Length);
+                udpClient = new UdpClient(localBasePort + currentProcess.Id);
+                udpClient.Connect(localAddr, remoteBasePort + currentProcess.Id);
                 if (typeIndex.Equals(0))// PWM and Cutoff signal
                 {
                     label1.Text = "PWM Passed tests:";
@@ -431,7 +432,7 @@ namespace TestsDisplays
                 }
                 Thread writeThread = new Thread(() => WriteDataAsync(udpClient));
                 writeThread.Start();
-                strCmdText = "/C ConsoleSerialPortReader.exe " + TestNameParam + " "  + SMAComParam + " " + ArduinoComParam + " " + pname.Length.ToString();
+                strCmdText = "/C ConsoleSerialPortReader.exe " + TestNameParam + " "  + SMAComParam + " " + ArduinoComParam + " " + currentProcess.Id.ToString();
                 Process p = Process.Start("CMD.exe", strCmdText);
 
             }

@@ -315,8 +315,9 @@ public class PortChat
                             WriteToArduino("PWRUP");
                         }
                     }
+                    if (!readThread.IsAlive)
+                        readThread.Start();
 
-                    readThread.Start();
                 }
                 if (stringComparer.Equals("PWRDWN", message))
                 {
@@ -1071,10 +1072,10 @@ public class PortChat
                     else
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Arduino Failed, Skiiped Cycle");
+                        Console.WriteLine("Arduino Failed, Skipped Cycle");
                         Console.ResetColor();
                         log.Error("Relay Voltage during hard power up failed. " + FullTextArduino);
-                        log.Error("Arduino Failed, Skiiped Cycle");
+                        log.Error("Arduino Failed, Skipped Cycle");
                     }
                     WriteToArduino("PWMREAD");
                     WriteToSmartAir("atg");
@@ -1112,10 +1113,10 @@ public class PortChat
                     else
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Arduino Failed, Skiiped Cycle");
+                        Console.WriteLine("Arduino Failed, Skipped Cycle");
                         Console.ResetColor();
                         log.Error("Relay Voltage after trigger failed. " + FullTextArduino);
-                        log.Error("Arduino Failed, Skiiped Cycle");
+                        log.Error("Arduino Failed, Skipped Cycle");
                     }
                     
                     ColoerdTimer(18000);
@@ -1514,6 +1515,14 @@ public class PortChat
                 _serialPort.WriteLine(TextToSend + "\r");
                 Thread.Sleep(SleepAfterWriteLineEvent);
             }
+            if (!_serialPort.IsOpen)
+            {
+                _serialPort.Open();
+                Console.WriteLine("Command sent to SmartAir: " + TextToSend);
+                _serialPort.WriteLine("\r");
+                _serialPort.WriteLine(TextToSend + "\r");
+                Thread.Sleep(SleepAfterWriteLineEvent);
+            }
         }
         catch (Exception ex)
         {
@@ -1521,6 +1530,7 @@ public class PortChat
             log.Error(ex);
             if (ex.Message.Contains("Access to the port is denied"))
             {
+                message = "";
                 ResetSmartAir();
             }
             else
@@ -1671,5 +1681,42 @@ public class PortChat
         SmtpServer.EnableSsl = true;
 
         SmtpServer.Send(mail);
+    }
+
+    static bool FullStringVoltageConvertor(double VoltageRequiredValue, bool SmallerOrGreater)
+    {
+        int VoltageValue = 0;
+        bool ConditionMet = true;
+        string LocalText = "";
+        LocalText = FullTextArduino;
+        int VoltageIndex = 0;
+        while ((LocalText.Contains("Voltage #")) && (LocalText.Length > 50) && (LocalText.IndexOf("Voltage #") < 30))
+        {
+            try
+            {
+                VoltageIndex = LocalText.IndexOf("Voltage #");
+                VoltageValue = Convert.ToInt16(LocalText.Substring(VoltageIndex + 9, 3));
+                LocalText = LocalText.Remove(0, VoltageIndex + 9 + 3);
+                if (!SmallerOrGreater)
+                {
+                    if ((VoltageValue > VoltageRequiredValue) && (ConditionMet))
+                    {
+                        ConditionMet = false;
+                    }
+                }
+                if (SmallerOrGreater)
+                {
+                    if ((VoltageValue < VoltageRequiredValue) && (ConditionMet))
+                    {
+                        ConditionMet = false;
+                    }
+                }
+            }
+            catch
+            {
+
+            }
+        }
+        return ConditionMet;
     }
 }
