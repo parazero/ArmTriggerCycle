@@ -893,8 +893,8 @@ public class PortChat
                         log.Error("PWM Length at idle failed. #:" + PWM_width_error_Counter.ToString());
                     }
                     FullTextSmartAir = "";
-                    WriteToSmartAir("atg");
-                    WaitForText("!System.....................: ARMED");
+                    WriteToSmartAir("atg", "!System.....................: ARMED",true,3);
+                    //WaitForText("!System.....................: ARMED");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
                     PWMLength = PWMLengthConvertor();
@@ -915,8 +915,8 @@ public class PortChat
                         log.Error("PWM Length after arm failed. #:" + PWM_width_error_Counter.ToString());
                     }
                     FullTextSmartAir = "";
-                    WriteToSmartAir("fire");
-                    WaitForText("SWITCH MOTOR_OFF");
+                    WriteToSmartAir("fire", "SWITCH MOTOR_OFF",true,2);
+                    //WaitForText("SWITCH MOTOR_OFF");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
                     stopWatch.Restart();
@@ -940,7 +940,7 @@ public class PortChat
                     }
                     
                     ColoerdTimer(5000);
-                    WriteToSmartAir("rst");
+                    WriteToSmartAir("rst", "!Application................: Start",true,3);
                     stopWatch.Reset();
                 }
                 TimeSpan ts = stopWatch.Elapsed;
@@ -951,8 +951,8 @@ public class PortChat
                     Console.WriteLine("Test Did not finish within 15 seconds. #:" + LongTest.ToString());
                     Console.ResetColor();
                     log.Error("Test Did not finish within 15 seconds. #:" + LongTest.ToString());
-                    WriteToSmartAir("rst");
-                    
+                    WriteToSmartAir("rst", "!Application................: Start", true, 3);
+
                 }
                 SendToUI(udpClient, "PWMToRelay", PWM_width_Counter, PWM_width_error_Counter, General_Counter, General_Counter_Error);
             }
@@ -1008,20 +1008,6 @@ public class PortChat
             {
                 
                 bool TrueOrFalse = false;
-                int PWMLength = 0;
-
-                
-                //WriteToSmartAir("rst");
-                //WaitForSuccessfulInit();
-                /*if (message.Contains("PWRUP"))
-                {
-                    log.Debug("SmartAir Powers up.");
-                    FullTextArduino = "";
-                    _continue = false;
-                    WriteToArduino("PWRUP");
-                    _continue = true;
-
-                }*/
                 if (!stopWatch.IsRunning)
                     stopWatch.Start();
                 if (FullTextSmartAir.Contains(": Finished successfully"))
@@ -1054,8 +1040,9 @@ public class PortChat
                     int VoltIndex = FullTextArduino.IndexOf("Voltage #");
                     if (!VoltIndex.Equals(-1))
                     {
-                        double VoltVal = Convert.ToDouble(FullTextArduino.Substring(VoltIndex + 9, 3));
-                        if (VoltVal < 0.6)
+                        TrueOrFalse = FullStringVoltageConvertor(0.6, false);
+                        //double VoltVal = Convert.ToDouble(FullTextArduino.Substring(VoltIndex + 9, 3));
+                        if (TrueOrFalse)
                         {
 
                         }
@@ -1091,8 +1078,9 @@ public class PortChat
                     int VoltIndex = FullTextArduino.IndexOf("Voltage #");
                     if (!VoltIndex.Equals(-1))
                     {
-                        double VoltVal = Convert.ToDouble(FullTextArduino.Substring(VoltIndex + 9, 3));
-                        if (VoltVal > 4.6)
+                        //double VoltVal = Convert.ToDouble(FullTextArduino.Substring(VoltIndex + 9, 3));
+                        TrueOrFalse = FullStringVoltageConvertor(4.6, true);
+                        if (TrueOrFalse)
                         {
                             General_Counter++;
                             Console.ForegroundColor = ConsoleColor.Blue;
@@ -1157,6 +1145,7 @@ public class PortChat
                             log.Error(ex);
                             if (ex.Message.Contains("Access to the port is denied"))
                             {
+                                message = "";
                                 ResetSmartAir();
                             }
                             else
@@ -1468,7 +1457,7 @@ public class PortChat
         //LogTestToFile(CurrentClass, "Mode Sequence Ended\r");
     }
 
-    static void WaitForText(string TextToSearch)
+    /*static void WaitForText(string TextToSearch)
     {
         WaitForInit = true;
         Stopwatch resetStopWatch = new Stopwatch();
@@ -1492,6 +1481,50 @@ public class PortChat
             log.Error("###SmartAir Did not Reply.");
         }
         Thread.Sleep(SleepDurationAfterBoardInitMethod);
+    }*/
+
+    static bool WaitForText(string TextToSearch)
+    {
+        bool WaitForText = true;
+        Stopwatch resetStopWatch = new Stopwatch();
+        resetStopWatch.Start();
+
+        TimeSpan ts = resetStopWatch.Elapsed;
+        while ((WaitForText) && (ts.TotalMilliseconds <= 35000))
+        {
+            ts = resetStopWatch.Elapsed;
+            if (FullTextSmartAir.Contains(TextToSearch))
+                WaitForText = false;
+        }
+        if (WaitForText)
+        {
+            Console.WriteLine("###SmartAir Did not Reply.");
+            log.Error("###SmartAir Did not Reply.");
+        }
+        Thread.Sleep(250);
+        return WaitForText;
+    }
+
+    static bool WaitForText(string TextToSearch, int TimeOutTimerDurationInMilliSec)
+    {
+        bool WaitForText = true;
+        Stopwatch resetStopWatch = new Stopwatch();
+        resetStopWatch.Start();
+
+        TimeSpan ts = resetStopWatch.Elapsed;
+        while ((WaitForText) && (ts.TotalMilliseconds <= TimeOutTimerDurationInMilliSec))
+        {
+            ts = resetStopWatch.Elapsed;
+            if (FullTextSmartAir.Contains(TextToSearch))
+                WaitForText = false;
+        }
+        if (WaitForText)
+        {
+            Console.WriteLine("###SmartAir Did not Reply.");
+            log.Error("###SmartAir Did not Reply.");
+        }
+        Thread.Sleep(250);
+        return WaitForText;
     }
 
     static void DataReceivedFromArduinoHandler(object sender, SerialDataReceivedEventArgs e)
@@ -1543,6 +1576,100 @@ public class PortChat
             
         }
 
+    }
+
+    static bool WriteToSmartAir(string TextToSend, string ReplayToSearchFor, bool Retry, int RetryCounter)
+    {
+        bool TextFound = false;
+        int Count = 0;
+        try
+        {
+            if (_serialPort.IsOpen)
+            {
+                _serialPort.WriteLine("\r");
+                _serialPort.WriteLine(TextToSend + "\r");
+                Thread.Sleep(SleepAfterWriteLineEvent);
+            }
+            if (!_serialPort.IsOpen)
+            {
+                _serialPort.Open();
+                _serialPort.WriteLine("\r");
+                _serialPort.WriteLine(TextToSend + "\r");
+                Thread.Sleep(SleepAfterWriteLineEvent);
+            }
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("Access to the port is denied"))
+            {
+                _serialPort.Close();
+                Thread.Sleep(SleepAfterWriteLineEvent);
+                _serialPort.Open();
+            }
+            else
+            {
+
+            }
+
+        }
+        TextFound = !WaitForText(ReplayToSearchFor);
+        if (TextFound)
+        {
+
+        }
+        while ((!TextFound) && Retry && Count < RetryCounter)
+        {
+            Count++;
+            WriteToSmartAir(TextToSend, ReplayToSearchFor, true, 0);
+        }
+        return TextFound;
+    }
+
+    static bool WriteToSmartAir(string TextToSend, string ReplayToSearchFor, bool Retry, int RetryCounter, int TimeOutDuration)
+    {
+        bool TextFound = false;
+        int Count = 0;
+        try
+        {
+            if (_serialPort.IsOpen)
+            {
+                _serialPort.WriteLine("\r");
+                _serialPort.WriteLine(TextToSend + "\r");
+                Thread.Sleep(SleepAfterWriteLineEvent);
+            }
+            if (!_serialPort.IsOpen)
+            {
+                _serialPort.Open();
+                _serialPort.WriteLine("\r");
+                _serialPort.WriteLine(TextToSend + "\r");
+                Thread.Sleep(SleepAfterWriteLineEvent);
+            }
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("Access to the port is denied"))
+            {
+                _serialPort.Close();
+                Thread.Sleep(SleepAfterWriteLineEvent);
+                _serialPort.Open();
+            }
+            else
+            {
+
+            }
+
+        }
+        TextFound = !WaitForText(ReplayToSearchFor, TimeOutDuration);
+        if (TextFound)
+        {
+
+        }
+        while ((!TextFound) && Retry && Count < RetryCounter)
+        {
+            Count++;
+            WriteToSmartAir(TextToSend, ReplayToSearchFor, true, 0, TimeOutDuration);
+        }
+        return TextFound;
     }
 
     static int PWMLengthConvertor()
