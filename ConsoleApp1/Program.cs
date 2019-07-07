@@ -60,7 +60,7 @@ public class PortChat
     static int SleepDurationAfterResetEvent = 15000;
     static int SleepDuaraionAfterPortInit = 1000;
     static int SleepDurationForFullInit = 25000;
-    static int SleepAfterWriteLineEvent = 2000;
+    static int SleepAfterWriteLineEvent = 3000;
     static int SleepAfterDisarmEvent = 4500;
     static int SleepForArmDuration = 2000;
     static int SleepAfterArduinoFlash = 4500;
@@ -75,7 +75,7 @@ public class PortChat
 
     static string ArduinoCOMPort = "COM3";
 
-    static Stopwatch stopWatch;
+    static public Stopwatch stopWatch = new Stopwatch();
 
     static Stopwatch resetStopWatch;
 
@@ -260,7 +260,7 @@ public class PortChat
 
         Console.WriteLine("Type QUIT to exit");
         Console.WriteLine("Channel ID: " + portOffset.ToString());
-        stopWatch = new Stopwatch();
+        //stopWatch = new Stopwatch();
         stopWatch.Start();
         while (_continue)
         {
@@ -322,6 +322,10 @@ public class PortChat
                 if (stringComparer.Equals("PWRDWN", message))
                 {
                     WriteToArduino("PWRDWN");
+                    WriteToArduino("PWMREAD");
+                }
+                if (stringComparer.Equals("PWMREAD", message))
+                {
                     WriteToArduino("PWMREAD");
                 }
             }
@@ -715,7 +719,7 @@ public class PortChat
                     Thread.Sleep(5000);
                     log.Debug("Set XBT to Low");
                     ArduinoPort.WriteLine("XBTLow");
-                    stopWatch = new Stopwatch();
+                    //stopWatch = new Stopwatch();
                     stopWatch.Start();
                     //Thread.Sleep(5000);
                 }
@@ -789,7 +793,7 @@ public class PortChat
             }
             if (param.Equals("TriggerDueToRC"))
             {
-                stopWatch = new Stopwatch();
+                //stopWatch = new Stopwatch();
                 if (message.Contains(": Finished successfully"))
                 {
                     log.Debug("SmartAir finished initialization.");
@@ -822,7 +826,7 @@ public class PortChat
             }
             if (param.Equals("DisarmDueToNoVib"))
             {
-                stopWatch = new Stopwatch();
+                //stopWatch = new Stopwatch();
                 if (message.Contains(": Finished successfully"))
                 {
                     log.Debug("SmartAir finished initialization.");
@@ -866,7 +870,7 @@ public class PortChat
             {
                 int LongTest = 0;
                 int PWMLength = 0;
-                stopWatch = new Stopwatch();
+                //stopWatch = new Stopwatch();
                 if (!stopWatch.IsRunning)
                     stopWatch.Start();
                 //WriteToSmartAir("rst");
@@ -874,6 +878,7 @@ public class PortChat
                 if (message.Contains(": Finished successfully"))
                 {
                     log.Debug("SmartAir finished initialization.");
+                    WriteToArduino("PWMREAD");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
                     PWMLength = PWMLengthConvertor();
@@ -895,6 +900,7 @@ public class PortChat
                     FullTextSmartAir = "";
                     WriteToSmartAir("atg", "!System.....................: ARMED",true,3);
                     //WaitForText("!System.....................: ARMED");
+                    WriteToArduino("PWMREAD");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
                     PWMLength = PWMLengthConvertor();
@@ -917,6 +923,7 @@ public class PortChat
                     FullTextSmartAir = "";
                     WriteToSmartAir("fire", "SWITCH MOTOR_OFF",true,2);
                     //WaitForText("SWITCH MOTOR_OFF");
+                    WriteToArduino("PWMREAD");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
                     stopWatch.Restart();
@@ -943,7 +950,7 @@ public class PortChat
                     WriteToSmartAir("rst", "!Application................: Start",true,3);
                     stopWatch.Reset();
                 }
-                TimeSpan ts = stopWatch.Elapsed;
+                ts = stopWatch.Elapsed;
                 if (ts.TotalMilliseconds >= 15000)
                 {
                     LongTest++;
@@ -960,7 +967,7 @@ public class PortChat
             {
                 int LongTest = 0;
                 bool TrueOrFalse = false;
-                stopWatch = new Stopwatch();
+                //stopWatch = new Stopwatch();
                 //WriteToSmartAir("rst");
                 //WaitForSuccessfulInit();
                 if (!stopWatch.IsRunning)
@@ -991,7 +998,7 @@ public class PortChat
                     Thread.Sleep(2000);
                     stopWatch.Restart();
                 }
-                TimeSpan ts = stopWatch.Elapsed;
+                ts = stopWatch.Elapsed;
                 if (ts.TotalMilliseconds >= 15000)
                 {
                     LongTest++;
@@ -1495,6 +1502,11 @@ public class PortChat
             ts = resetStopWatch.Elapsed;
             if (FullTextSmartAir.Contains(TextToSearch))
                 WaitForText = false;
+            if (_serialPort.BytesToRead > 0)
+            {
+                message = _serialPort.ReadExisting();
+                FullTextSmartAir += message;
+            }
         }
         if (WaitForText)
         {
@@ -1517,6 +1529,11 @@ public class PortChat
             ts = resetStopWatch.Elapsed;
             if (FullTextSmartAir.Contains(TextToSearch))
                 WaitForText = false;
+            if (_serialPort.BytesToRead > 0)
+            {
+                message = _serialPort.ReadExisting();
+                FullTextSmartAir += message;
+            }
         }
         if (WaitForText)
         {
