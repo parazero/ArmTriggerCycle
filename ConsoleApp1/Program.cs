@@ -52,6 +52,7 @@ public class PortChat
     static private bool TestTimeout = false;
     static bool EndCondition = false;
     static bool IdentifiedText = false;
+    static bool WaitForReset = false;
 
     static long General_Counter = 0;
     static long General_Counter_Error = 0;
@@ -65,6 +66,7 @@ public class PortChat
     static int SleepForArmDuration = 2000;
     static int SleepAfterArduinoFlash = 4500;
     static int LongTest = 0;
+    static int TestTimeOutDuration = 35000;
 
     static string message;
     static string CurrDir = "";
@@ -878,6 +880,7 @@ public class PortChat
                 if (message.Contains(": Finished successfully"))
                 {
                     log.Debug("SmartAir finished initialization.");
+                    WaitForReset = false;
                     WriteToArduino("PWMREAD");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
@@ -951,7 +954,7 @@ public class PortChat
                     stopWatch.Reset();
                 }
                 ts = stopWatch.Elapsed;
-                if (ts.TotalMilliseconds >= 15000)
+                if ((ts.TotalMilliseconds >= TestTimeOutDuration) && (!WaitForReset))
                 {
                     LongTest++;
                     Console.ForegroundColor = ConsoleColor.Red;
@@ -959,7 +962,7 @@ public class PortChat
                     Console.ResetColor();
                     log.Error("Test Did not finish within 15 seconds. #:" + LongTest.ToString());
                     WriteToSmartAir("rst", "!Application................: Start", true, 3);
-
+                    WaitForReset = true;
                 }
                 SendToUI(udpClient, "PWMToRelay", PWM_width_Counter, PWM_width_error_Counter, General_Counter, General_Counter_Error);
             }
@@ -975,6 +978,7 @@ public class PortChat
                 if (message.Contains(": Finished successfully"))
                 {
                     log.Debug("SmartAir finished initialization.");
+                    WaitForReset = false;
                     WriteToSmartAir("rst");
                     FullTextArduino = "";
                     WaitForSuccessfulInit();
@@ -999,8 +1003,9 @@ public class PortChat
                     stopWatch.Restart();
                 }
                 ts = stopWatch.Elapsed;
-                if (ts.TotalMilliseconds >= 15000)
+                if (ts.TotalMilliseconds >= TestTimeOutDuration && (!WaitForReset))
                 {
+                    WaitForReset = true;
                     LongTest++;
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Test Did not finish within 15 seconds. #:" + LongTest.ToString());
@@ -1019,6 +1024,7 @@ public class PortChat
                     stopWatch.Start();
                 if (FullTextSmartAir.Contains(": Finished successfully"))
                 {
+                    WaitForReset = false;
                     WriteToArduino("PWMREADStop");
                     FullTextSmartAir = "";
                     log.Debug("SmartAir finished initialization.");
@@ -1166,9 +1172,10 @@ public class PortChat
                     stopWatch.Restart();
                 }
                 ts = stopWatch.Elapsed;
-                if (ts.TotalMilliseconds >= 35000)
+                if (ts.TotalMilliseconds >= TestTimeOutDuration && (!WaitForReset))
                 {
                     LongTest++;
+                    WaitForReset = true;
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Test Did not finish within 35 seconds. #:" + LongTest.ToString());
                     Console.ResetColor();
