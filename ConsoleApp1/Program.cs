@@ -899,6 +899,7 @@ public class PortChat
                         Console.WriteLine("PWM Length at idle failed. #:" + PWM_width_error_Counter.ToString());
                         Console.ResetColor();
                         log.Error("PWM Length at idle failed. #:" + PWM_width_error_Counter.ToString());
+                        log.Error(FullTextArduino);
                     }
                     FullTextSmartAir = "";
                     WriteToSmartAir("atg", "!System.....................: ARMED",true,3);
@@ -922,6 +923,7 @@ public class PortChat
                         Console.WriteLine("PWM Length after arm failed. #:" + PWM_width_error_Counter.ToString());
                         Console.ResetColor();
                         log.Error("PWM Length after arm failed. #:" + PWM_width_error_Counter.ToString());
+                        log.Error(FullTextArduino);
                     }
                     FullTextSmartAir = "";
                     WriteToSmartAir("fire", "SWITCH MOTOR_OFF",true,2);
@@ -939,6 +941,10 @@ public class PortChat
                     if (PWMLength > 1850)
                     {
                         General_Counter++;
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        Console.WriteLine("PWM Length after trigger passed. #:" + General_Counter.ToString());
+                        Console.ResetColor();
+                        log.Debug("PWM Length after trigger passed. #:" + General_Counter.ToString());
                     }
                     else
                     {
@@ -947,9 +953,10 @@ public class PortChat
                         Console.WriteLine("PWM Length after trigger failed. #:" + General_Counter_Error.ToString());
                         Console.ResetColor();
                         log.Error("PWM Length after trigger failed. #:" + General_Counter_Error.ToString());
+                        log.Error(FullTextArduino);
                     }
                     
-                    ColoerdTimer(5000);
+                    ColoerdTimer(10000);
                     WriteToSmartAir("rst", "!Application................: Start",true,3);
                     stopWatch.Reset();
                 }
@@ -958,9 +965,9 @@ public class PortChat
                 {
                     LongTest++;
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Test Did not finish within 15 seconds. #:" + LongTest.ToString());
+                    Console.WriteLine("Test Did not finish within 35 seconds. #:" + LongTest.ToString());
                     Console.ResetColor();
-                    log.Error("Test Did not finish within 15 seconds. #:" + LongTest.ToString());
+                    log.Error("Test Did not finish within 35 seconds. #:" + LongTest.ToString());
                     WriteToSmartAir("rst", "!Application................: Start", true, 3);
                     WaitForReset = true;
                 }
