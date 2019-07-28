@@ -296,7 +296,7 @@ public class PortChat
                     //readThread.Suspend();
                     //
                     WriteToArduino("PWRUP");
-                    WriteToArduino("PWMREAD");
+                    WriteToArduino("PWMREADServo");
                     ColoerdTimer(5000);
                     //_serialPort.Open();
                     //readThread.Resume();
@@ -314,7 +314,7 @@ public class PortChat
                         }
                         else
                         {
-                            WriteToArduino("PWMREADStop");
+                            WriteToArduino("PWMREADServoStop");
                             WriteToArduino("PWRDWN");
                             ColoerdTimer(3000);
                             WriteToArduino("PWRUP");
@@ -327,11 +327,11 @@ public class PortChat
                 if (stringComparer.Equals("PWRDWN", message))
                 {
                     WriteToArduino("PWRDWN");
-                    WriteToArduino("PWMREAD");
+                    WriteToArduino("PWMREADServo");
                 }
                 if (stringComparer.Equals("PWMREAD", message))
                 {
-                    WriteToArduino("PWMREAD");
+                    WriteToArduino("PWMREADServo");
                 }
             }
         }
@@ -884,7 +884,7 @@ public class PortChat
                 {
                     log.Debug("SmartAir finished initialization.");
                     WaitForReset = false;
-                    WriteToArduino("PWMREAD");
+                    WriteToArduino("PWMREADServo");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
                     PWMLength = PWMLengthConvertor();
@@ -907,7 +907,7 @@ public class PortChat
                     FullTextSmartAir = "";
                     WriteToSmartAir("atg", "!System.....................: ARMED", true, 3);
                     //WaitForText("!System.....................: ARMED");
-                    WriteToArduino("PWMREAD");
+                    WriteToArduino("PWMREADServo");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
                     PWMLength = PWMLengthConvertor();
@@ -929,14 +929,15 @@ public class PortChat
                         log.Error(FullTextArduino);
                     }
                     FullTextSmartAir = "";
-                    WriteToSmartAir("fire", "SWITCH MOTOR_OFF", true, 2);
+                    WriteToSmartAir("fire");
+                    //WriteToSmartAir("fire", "SWITCH MOTOR_OFF", true, 2);
                     //WaitForText("SWITCH MOTOR_OFF");
-                    WriteToArduino("PWMREAD");
+                    WriteToArduino("PWMREADServo");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
                     stopWatch.Restart();
                 }
-                if (message.Contains("SWITCH MOTOR_OFF"))
+                if (message.Contains("MOTOR OFF PWM LOW") || message.Contains("PYRO PWM LOW"))
                 {
                     Console.WriteLine("Reset in 15 Seconds");
                     log.Debug("Reset SmartAir in 15 seconds ");
@@ -1035,7 +1036,7 @@ public class PortChat
                 if (FullTextSmartAir.Contains(": Finished successfully"))
                 {
                     WaitForReset = false;
-                    WriteToArduino("PWMREADStop");
+                    WriteToArduino("PWMREADServoStop");
                     FullTextSmartAir = "";
                     log.Debug("SmartAir finished initialization.");
 
@@ -1087,12 +1088,12 @@ public class PortChat
                         log.Error("Relay Voltage during hard power up failed. " + FullTextArduino);
                         log.Error("Arduino Failed, Skipped Cycle");
                     }
-                    WriteToArduino("PWMREAD");
+                    WriteToArduino("PWMREADServo");
                     WriteToSmartAir("atg");
                     WriteToSmartAir("fire");
                     stopWatch.Restart();
                 }
-                if (message.Contains("SWITCH MOTOR_OFF"))
+                if (message.Contains("MOTOR OFF PWM LOW") || message.Contains("PYRO PWM LOW"))
                 {
                     Console.WriteLine("Reset in 25 Seconds");
                     log.Debug("Reset SmartAir in 25 seconds ");
@@ -1133,7 +1134,7 @@ public class PortChat
                     ColoerdTimer(18000);
                     FullTextArduino = "";
                     WriteToArduino("PWRDWN");
-                    WriteToArduino("PWMREAD");
+                    WriteToArduino("PWMREADServo");
 
                     TrueOrFalse = FullStringPWMLengthConvertor(1050, false);
                     if (TrueOrFalse)
@@ -1152,11 +1153,11 @@ public class PortChat
                         Console.ResetColor();
                         log.Error("PWM Length at hard reset failed. #:" + PWM_width_error_Counter.ToString());
                     }
-                    WriteToArduino("PWMREADStop");
+                    WriteToArduino("PWMREADServoStop");
                     Thread.Sleep(2000);
                     WriteToArduino("PWRUP");
                     Thread.Sleep(5000);
-                    WriteToArduino("PWMREAD");
+                    WriteToArduino("PWMREADServo");
                     if (!_serialPort.IsOpen)
                         try
                         {
@@ -1173,7 +1174,7 @@ public class PortChat
                             }
                             else
                             {
-                                WriteToArduino("PWMREADStop");
+                                WriteToArduino("PWMREADServoStop");
                                 WriteToArduino("PWRDWN");
                                 ColoerdTimer(3000);
                                 WriteToArduino("PWRUP");
@@ -1628,7 +1629,7 @@ public class PortChat
             }
             else
             {
-                WriteToArduino("PWMREADStop");
+                WriteToArduino("PWMREADServoStop");
                 WriteToArduino("PWRDWN");
                 ColoerdTimer(3000);
                 WriteToArduino("PWRUP");
