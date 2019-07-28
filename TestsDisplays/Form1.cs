@@ -29,6 +29,7 @@ namespace TestsDisplays
 
         static Process p;
 
+        public int PIDValue;
 
         IPAddress localAddr = IPAddress.Parse("127.0.0.1");
         UdpClient udpClient = new UdpClient();
@@ -76,13 +77,16 @@ namespace TestsDisplays
                 int errorIndex = returnData.IndexOf("Error:");
                 int value2Index = returnData.IndexOf("Value2:");
                 int error2Index = returnData.IndexOf("Error2:");
+                int PIDIndex = returnData.IndexOf("PID:");
                 int eolIndex = returnData.IndexOf("EOL");
 
                 int valueLength = errorIndex - valueIndex;
                 int errorLength = value2Index - errorIndex;
                 int value2Length = error2Index - value2Index;
-                int error2Length = eolIndex - error2Index;
-
+                int error2Length = PIDIndex - error2Index;
+                int PIDLength = eolIndex - PIDIndex;
+                PIDValue = Convert.ToInt32(returnData.Substring(PIDIndex + 4, PIDLength-4));
+                //RemoteChannellabel.Text = "Remote Channel ID: " + PIDValue.ToString();
                 if (returnData.Contains("MotorSignal:"))
                 {
                     //MotorSignal: Value: 9999999 Error: 9999988 Value2: 9999977 Error2: 9999966 EOL
@@ -271,7 +275,7 @@ namespace TestsDisplays
             {
                 _continue = true;
                 buttonStart.Text = "Stop";
-                ChannelIDLabel.Text = "Channel ID: " + currentProcess.Id.ToString();
+                ChannelIDLabel.Text = "Channel ID: " + currentProcess.Id.ToString();//Remote Channel ID:
                 //udpClient = new UdpClient(localBasePort + typeIndex);
                 //udpClient.Connect(localAddr, remoteBasePort + typeIndex);
                 udpClient = new UdpClient(localBasePort + currentProcess.Id);
@@ -438,15 +442,15 @@ namespace TestsDisplays
             }
             else if (buttonStart.Text.Equals("Stop"))
             {
-                /*Process[] W = Process.GetProcesses();
+                Process[] W = Process.GetProcesses();
                 foreach (Process w in W)
                 {
-                    if (w.ProcessName.Equals("ConsoleSerialPortReader"))
+                    if (w.Id.Equals(PIDValue) && !PIDValue.Equals(0))
                     {
-                        w.Kill()
+                        w.Kill();
                     }
                     //TestTypecomboBox.Items.Add(w.ProcessName);
-                }*/
+                }
                 _continue = false;
                 buttonStart.Text = "Start";
                 udpClient.Close();
