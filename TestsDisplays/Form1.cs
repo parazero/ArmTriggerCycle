@@ -483,10 +483,15 @@ namespace TestsDisplays
             {
                 MessageBox.Show("Make sure:\r\n" +
                                 "PSTO is set to 20 seconds,\r\n" +
+                                "MSTO is set to 20 seconds,\r\n" +
                                 "PSOF is set to 1000,\r\n" +
                                 "PSON is set to 1900,\r\n" +
+                                "MSOF is set to 1000,\r\n" +
+                                "MSON is set to 1900,\r\n" +
                                 "PWM is set to 1,\r\n" +
-                                "ReadPWMWidthWithRC is loaded to arduino.", "Message");
+                                "MPWM is set to 1,\r\n" +
+                                "NVI is set to 400,\r\n" +
+                                "Arduino_Pyro_Nano_ReadPWMWithCommands is loaded to arduino.", "Message");
             }
 
             if (TestTypecomboBox.SelectedIndex.Equals(10))
@@ -495,7 +500,7 @@ namespace TestsDisplays
                                 "PSOF is set to 1000,\r\n" +
                                 "PSON is set to 1900,\r\n" +
                                 "PWM is set to 1,\r\n" +
-                                "ReadPWMWidthWithRC is loaded to arduino.", "Message");
+                                "Arduino_Pyro_Nano_ReadPWMWithCommands is loaded to arduino.", "Message");
             }
             if (TestTypecomboBox.SelectedIndex.Equals(11))
             {
@@ -504,7 +509,7 @@ namespace TestsDisplays
                                 "PSOF is set to 1000,\r\n" +
                                 "PSON is set to 1900,\r\n" +
                                 "PWM is set to 1,\r\n" +
-                                "ReadPWMWidthWithRCCommands is loaded to arduino.", "Message");
+                                "Arduino_Pyro_Nano_ReadPWMWithCommands is loaded to arduino.", "Message");
             }
         }
     }

@@ -130,7 +130,7 @@ public class PortChat
         {
             portOffset = Convert.ToInt32(args[3]);
         }
-        //Process[] pname = Process.GetProcessesByName("TestsDisplays");
+
         localPort = localBasePort + portOffset;
         remotePort = remoteBasePort + portOffset;
         /*if (param.Equals("MotorSignalDetection"))
@@ -186,7 +186,6 @@ public class PortChat
         //LogName1 = "d.log";//param + "_" + DateTime.Now.ToString().Replace("/","-").Replace(" ","_").Replace(":","-") + ".log";
         //log4net.GlobalContext.Properties["LogName"] = LogName1;
         log.Debug(param);
-        //param.Replace()
 
         UdpClient udpClient = new UdpClient(localPort);
         string message;
@@ -251,20 +250,14 @@ public class PortChat
 
             readThread.Start();
         }
-        //else
-        //{
-        //_continue = true;
-        //}
+
 
         if (param.Equals("PWMVoltageAtPowerCycle"))
         {
             Console.WriteLine("Send PWRUP to start test.");
         }
-        //name = Console.ReadLine();
-
         Console.WriteLine("Type QUIT to exit");
         Console.WriteLine("Channel ID: " + portOffset.ToString());
-        //stopWatch = new Stopwatch();
         stopWatch.Start();
         SendToUI(udpClient, "InitData", 0, 0, 0, 0);
         while (_continue)
@@ -874,7 +867,8 @@ public class PortChat
             if (param.Equals("PWMToRelay"))
             {
                 int LongTest = 0;
-                int PWMLength = 0;
+                int ServoPWMLength = 0;
+                int MotorPWMLength = 0;
                 //stopWatch = new Stopwatch();
                 if (!stopWatch.IsRunning)
                     stopWatch.Start();
@@ -882,13 +876,20 @@ public class PortChat
                 //WaitForSuccessfulInit();
                 if (message.Contains(": Finished successfully"))
                 {
+                    String TimeNow = DateTime.Now.ToString("yy/MM/dd hh:mm:ss");
+                    WriteToSmartAir("DTM " + "\"" + TimeNow + "\"");
                     log.Debug("SmartAir finished initialization.");
                     WaitForReset = false;
                     WriteToArduino("PWMREADServo");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
-                    PWMLength = PWMLengthConvertor();
-                    if (PWMLength < 1050)
+                    ServoPWMLength = PWMLengthConvertor();
+                    string TempArduinoText = FullTextArduino;
+                    WriteToArduino("PWMREADMotor");
+                    FullTextArduino = "";
+                    Thread.Sleep(1000);
+                    MotorPWMLength = PWMLengthConvertor();
+                    if ( (ServoPWMLength < 1050) && (MotorPWMLength < 1050))
                     {
                         Console.ForegroundColor = ConsoleColor.Blue;
                         Console.WriteLine("PWM Length at idle passed.");
@@ -902,16 +903,27 @@ public class PortChat
                         Console.WriteLine("PWM Length at idle failed. #:" + PWM_width_error_Counter.ToString());
                         Console.ResetColor();
                         log.Error("PWM Length at idle failed. #:" + PWM_width_error_Counter.ToString());
+                        log.Error("Servo PWM:");
+                        log.Error(TempArduinoText);
+                        log.Error("Motor PWM:");
                         log.Error(FullTextArduino);
+                        
                     }
                     FullTextSmartAir = "";
+                    TempArduinoText = "";
                     WriteToSmartAir("atg", "!System.....................: ARMED", true, 3);
                     //WaitForText("!System.....................: ARMED");
                     WriteToArduino("PWMREADServo");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
-                    PWMLength = PWMLengthConvertor();
-                    if (PWMLength < 1050)
+                    ServoPWMLength = PWMLengthConvertor();
+                    TempArduinoText = FullTextArduino;
+                    WriteToArduino("PWMREADMotor");
+                    FullTextArduino = "";
+                    Thread.Sleep(1000);
+                    MotorPWMLength = PWMLengthConvertor();
+                    
+                    if ((ServoPWMLength < 1050) && (MotorPWMLength < 1050))
                     {
                         PWM_width_Counter++;
                         Console.ForegroundColor = ConsoleColor.Blue;
@@ -926,23 +938,31 @@ public class PortChat
                         Console.WriteLine("PWM Length after arm failed. #:" + PWM_width_error_Counter.ToString());
                         Console.ResetColor();
                         log.Error("PWM Length after arm failed. #:" + PWM_width_error_Counter.ToString());
+                        log.Error("Servo PWM:");
+                        log.Error(TempArduinoText);
+                        log.Error("Motor PWM:");
                         log.Error(FullTextArduino);
                     }
                     FullTextSmartAir = "";
                     WriteToSmartAir("fire");
-                    //WriteToSmartAir("fire", "SWITCH MOTOR_OFF", true, 2);
+                    WriteToSmartAir("fire", "!RC was Trigger PYRO.", true, 2);
                     //WaitForText("SWITCH MOTOR_OFF");
                     WriteToArduino("PWMREADServo");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
                     stopWatch.Restart();
                 }
-                if (message.Contains("MOTOR OFF PWM LOW") || message.Contains("PYRO PWM LOW"))
+                if ( message.Contains("!RC was Trigger PYRO.") )
                 {
                     Console.WriteLine("Reset in 15 Seconds");
                     log.Debug("Reset SmartAir in 15 seconds ");
-                    PWMLength = PWMLengthConvertor();
-                    if (PWMLength > 1850)
+                    ServoPWMLength = PWMLengthConvertor();
+                    string TempArduinoText = FullTextArduino;
+                    WriteToArduino("PWMREADMotor");
+                    FullTextArduino = "";
+                    Thread.Sleep(1000);
+                    MotorPWMLength = PWMLengthConvertor();
+                    if ( (ServoPWMLength > 1850) && (MotorPWMLength > 1850) )
                     {
                         General_Counter++;
                         Console.ForegroundColor = ConsoleColor.Blue;
@@ -957,6 +977,9 @@ public class PortChat
                         Console.WriteLine("PWM Length after trigger failed. #:" + General_Counter_Error.ToString());
                         Console.ResetColor();
                         log.Error("PWM Length after trigger failed. #:" + General_Counter_Error.ToString());
+                        log.Error("Servo PWM:");
+                        log.Error(TempArduinoText);
+                        log.Error("Motor PWM:");
                         log.Error(FullTextArduino);
                     }
 
@@ -988,6 +1011,8 @@ public class PortChat
                     stopWatch.Start();
                 if (message.Contains(": Finished successfully"))
                 {
+                    String TimeNow = DateTime.Now.ToString("yy/MM/dd hh:mm:ss");
+                    WriteToSmartAir("DTM " + "\"" + TimeNow + "\"");
                     log.Debug("SmartAir finished initialization.");
                     WaitForReset = false;
                     WriteToSmartAir("rst");
@@ -1035,6 +1060,8 @@ public class PortChat
                     stopWatch.Start();
                 if (FullTextSmartAir.Contains(": Finished successfully"))
                 {
+                    String TimeNow = DateTime.Now.ToString("yy/MM/dd hh:mm:ss");
+                    WriteToSmartAir("DTM " + "\"" + TimeNow + "\"");
                     WaitForReset = false;
                     WriteToArduino("PWMREADServoStop");
                     FullTextSmartAir = "";
