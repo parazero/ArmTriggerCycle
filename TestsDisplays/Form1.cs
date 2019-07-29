@@ -68,8 +68,6 @@ namespace TestsDisplays
         {
             while (_continue)
             {
-                /*Byte[] receiveBytes = udpClient.Receive(ref RemoteIpEndPoint);
-                string returnData = Encoding.ASCII.GetString(receiveBytes);*/
                 var receivedResults = await udpClient.ReceiveAsync();
                 string returnData = Encoding.ASCII.GetString(receivedResults.Buffer);
 
@@ -243,6 +241,22 @@ namespace TestsDisplays
                 {
                     //ArmDisarm: Value: 9999999 Error: 9999988 Value2: 9999977 Error2: 9999966 EOL
                     int testIndex = returnData.IndexOf("PWMVoltageAtPowerCycle:");
+                    int testLength = valueIndex - testIndex;
+                    int valueValue = Convert.ToInt32(returnData.Substring(valueIndex + 7, valueLength - 8));
+                    int errorValue = Convert.ToInt32(returnData.Substring(errorIndex + 7, errorLength - 8));
+                    int value2Value = Convert.ToInt32(returnData.Substring(value2Index + 7, value2Length - 8));
+                    int error2Value = Convert.ToInt32(returnData.Substring(error2Index + 7, error2Length - 8));
+                    PassedTest1textBox.Invoke(textBoxUpdateDelegate, new Object[] { valueValue.ToString(), PassedTest1textBox });
+                    FailedTests1textBox.Invoke(textBoxUpdateDelegate, new Object[] { errorValue.ToString(), FailedTests1textBox });
+                    passedTests3textBox.Invoke(textBoxUpdateDelegate, new Object[] { value2Value.ToString(), passedTests3textBox });
+                    failedTests2textBox.Invoke(textBoxUpdateDelegate, new Object[] { error2Value.ToString(), failedTests2textBox });
+                    if (returnData.Equals("exit"))
+                        _continue = false;
+                }
+                if (returnData.Contains("Q10Voltage"))
+                {
+                    //ArmDisarm: Value: 9999999 Error: 9999988 Value2: 9999977 Error2: 9999966 EOL
+                    int testIndex = returnData.IndexOf("Q10Voltage:");
                     int testLength = valueIndex - testIndex;
                     int valueValue = Convert.ToInt32(returnData.Substring(valueIndex + 7, valueLength - 8));
                     int errorValue = Convert.ToInt32(returnData.Substring(errorIndex + 7, errorLength - 8));
@@ -434,6 +448,20 @@ namespace TestsDisplays
                     failedTests2textBox.Visible = true;
                     TestNameParam = "PWMVoltageAtPowerCycle";
                 }
+                if (typeIndex.Equals(12))
+                {
+                    label1.Text = "Q10 Init cycle Passed:";
+                    label2.Text = "Q10 Init cycle Failed:";
+                    TestName.Text = "Q10 Voltage at Soft power cycle";
+                    TestName.Visible = true;
+                    PassedTests2label.Visible = true;
+                    failedTests2label.Visible = true;
+                    PassedTests2label.Text = "Q10 trigger cycle Passed:";
+                    failedTests2label.Text = "Q10 trigger cycle Failed:";
+                    passedTests3textBox.Visible = true;
+                    failedTests2textBox.Visible = true;
+                    TestNameParam = "Q10Voltage";
+                }
                 Thread writeThread = new Thread(() => WriteDataAsync(udpClient));
                 writeThread.Start();
                 strCmdText = "/C ConsoleSerialPortReader.exe " + TestNameParam + " "  + SMAComParam + " " + ArduinoComParam + " " + currentProcess.Id.ToString();
@@ -509,6 +537,13 @@ namespace TestsDisplays
                                 "PSOF is set to 1000,\r\n" +
                                 "PSON is set to 1900,\r\n" +
                                 "PWM is set to 1,\r\n" +
+                                "Arduino_Pyro_Nano_ReadPWMWithCommands is loaded to arduino.", "Message");
+            }
+            if (TestTypecomboBox.SelectedIndex.Equals(12))
+            {
+                MessageBox.Show("Make sure:\r\n" +
+                                "SVPY is set to 2,\r\n" +
+                                "NVI is set to 400,\r\n" +
                                 "Arduino_Pyro_Nano_ReadPWMWithCommands is loaded to arduino.", "Message");
             }
         }

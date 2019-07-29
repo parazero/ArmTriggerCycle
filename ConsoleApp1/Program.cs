@@ -889,7 +889,7 @@ public class PortChat
                     FullTextArduino = "";
                     Thread.Sleep(1000);
                     MotorPWMLength = PWMLengthConvertor();
-                    if ( (ServoPWMLength < 1050) && (MotorPWMLength < 1050))
+                    if ((ServoPWMLength < 1050) && (MotorPWMLength < 1050))
                     {
                         Console.ForegroundColor = ConsoleColor.Blue;
                         Console.WriteLine("PWM Length at idle passed.");
@@ -907,7 +907,7 @@ public class PortChat
                         log.Error(TempArduinoText);
                         log.Error("Motor PWM:");
                         log.Error(FullTextArduino);
-                        
+
                     }
                     FullTextSmartAir = "";
                     TempArduinoText = "";
@@ -922,7 +922,7 @@ public class PortChat
                     FullTextArduino = "";
                     Thread.Sleep(1000);
                     MotorPWMLength = PWMLengthConvertor();
-                    
+
                     if ((ServoPWMLength < 1050) && (MotorPWMLength < 1050))
                     {
                         PWM_width_Counter++;
@@ -944,7 +944,7 @@ public class PortChat
                         log.Error(FullTextArduino);
                     }
                     FullTextSmartAir = "";
-                    WriteToSmartAir("fire");
+                    //WriteToSmartAir("fire");
                     WriteToSmartAir("fire", "!RC was Trigger PYRO.", true, 2);
                     //WaitForText("SWITCH MOTOR_OFF");
                     WriteToArduino("PWMREADServo");
@@ -952,7 +952,7 @@ public class PortChat
                     Thread.Sleep(1000);
                     stopWatch.Restart();
                 }
-                if ( message.Contains("!RC was Trigger PYRO.") )
+                if (message.Contains("!RC was Trigger PYRO."))
                 {
                     Console.WriteLine("Reset in 15 Seconds");
                     log.Debug("Reset SmartAir in 15 seconds ");
@@ -962,7 +962,7 @@ public class PortChat
                     FullTextArduino = "";
                     Thread.Sleep(1000);
                     MotorPWMLength = PWMLengthConvertor();
-                    if ( (ServoPWMLength > 1850) && (MotorPWMLength > 1850) )
+                    if ((ServoPWMLength > 1850) && (MotorPWMLength > 1850))
                     {
                         General_Counter++;
                         Console.ForegroundColor = ConsoleColor.Blue;
@@ -1249,6 +1249,127 @@ public class PortChat
                     }
                 }
                 SendToUI(udpClient, "PWMVoltageAtPowerCycle", PWM_width_Counter, PWM_width_error_Counter, General_Counter, General_Counter_Error);
+            }
+            if (param.Equals("Q10Voltage"))
+            {
+                int LongTest = 0;
+                int ServoPWMLength = 0;
+                int MotorPWMLength = 0;
+                //stopWatch = new Stopwatch();
+                if (!stopWatch.IsRunning)
+                    stopWatch.Start();
+                //WriteToSmartAir("rst");
+                //WaitForSuccessfulInit();
+                if (message.Contains(": Finished successfully"))
+                {
+                    String TimeNow = DateTime.Now.ToString("yy/MM/dd hh:mm:ss");
+                    WriteToSmartAir("DTM " + "\"" + TimeNow + "\"");
+                    log.Debug("SmartAir finished initialization.");
+                    WaitForReset = false;
+                    FullTextArduino = "";
+                    WriteToArduino("A1VLTG");
+                    Thread.Sleep(1000);
+
+                    if (FullTextArduino.Contains("Voltage #"))
+                    {
+                        if (Convert.ToDouble(FullTextArduino.Substring(FullTextArduino.IndexOf("Voltage #") + 9, 4)) <= 0.9)
+                        {
+                            //PWM_width_Counter++;
+                            Console.ForegroundColor = ConsoleColor.Blue;
+                            Console.WriteLine("Q10 Voltage at idle passed.");
+                            Console.ResetColor();
+                            log.Debug("Q10 Voltage at idle passed.");
+                        }
+                        else
+                        {
+                            PWM_width_error_Counter++;
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Q10 Voltage at idle failed. #:" + PWM_width_error_Counter.ToString());
+                            Console.ResetColor();
+                            log.Error("Q10 Voltage at idle failed. #:" + PWM_width_error_Counter.ToString());
+                            log.Error(FullTextArduino);
+
+                        }
+                    }
+                    FullTextSmartAir = "";
+                    WriteToSmartAir("atg", "!System.....................: ARMED", true, 3);
+
+                    FullTextSmartAir = "";
+                    WriteToSmartAir("fire", "!RC was Trigger PYRO.", true, 2);
+
+                    FullTextArduino = "";
+                    WriteToArduino("A1VLTG");
+                    Thread.Sleep(1000);
+                    stopWatch.Restart();
+                }
+                if (message.Contains("!RC was Trigger PYRO."))
+                {
+                    Console.WriteLine("Reset in 15 Seconds");
+                    log.Debug("Reset SmartAir in 15 seconds ");
+                    if (FullTextArduino.Contains("Voltage #"))
+                    {
+                        if (Convert.ToDouble(FullTextArduino.Substring(FullTextArduino.IndexOf("Voltage #") + 9, 4)) >= 3.9)
+                        {
+                            General_Counter++;
+                            Console.ForegroundColor = ConsoleColor.Blue;
+                            Console.WriteLine("Q10 Voltage after trigger passed.");
+                            Console.ResetColor();
+                            log.Debug("Q10 Voltage after trigger passed.");
+                        }
+                        else
+                        {
+                            General_Counter_Error++;
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Q10 Voltage after trigger failed. #:" + General_Counter_Error.ToString());
+                            Console.ResetColor();
+                            log.Error("Q10 Voltage after trigger failed. #:" + General_Counter_Error.ToString());
+                            log.Error(FullTextArduino);
+                        }
+                    }
+
+                    ColoerdTimer(15000);
+
+                    FullTextArduino = "";
+                    WriteToArduino("A1VLTG");
+                    Thread.Sleep(1000);
+
+                    if (FullTextArduino.Contains("Voltage #"))
+                    {
+                        if (Convert.ToDouble(FullTextArduino.Substring(FullTextArduino.IndexOf("Voltage #") + 9, 4)) <= 0.9)
+                        {
+                            PWM_width_Counter++;
+                            Console.ForegroundColor = ConsoleColor.Blue;
+                            Console.WriteLine("Q10 Voltage 20 seconds after trigger passed.");
+                            Console.ResetColor();
+                            log.Debug("Q10 Voltage 20 seconds after trigger passed.");
+                        }
+                        else
+                        {
+                            PWM_width_error_Counter++;
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Q10 Voltage 20 seconds after trigger failed. #:" + PWM_width_error_Counter.ToString());
+                            Console.ResetColor();
+                            log.Error("Q10 Voltage 20 seconds after trigger failed. #:" + PWM_width_error_Counter.ToString());
+                            log.Error(FullTextArduino);
+
+                        }
+                    }
+
+                    WriteToSmartAir("rst", "!Application................: Start", true, 3);
+                    stopWatch.Reset();
+                }
+                ts = stopWatch.Elapsed;
+                if ((ts.TotalMilliseconds >= TestTimeOutDuration) && (!WaitForReset))
+                {
+                    LongTest++;
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Test Did not finish within 35 seconds. #:" + LongTest.ToString());
+                    Console.ResetColor();
+                    log.Error("Test Did not finish within 35 seconds. #:" + LongTest.ToString());
+                    WriteToSmartAir("rst", "!Application................: Start", true, 3);
+                    WaitForReset = true;
+                }
+                SendToUI(udpClient, "Q10Voltage", PWM_width_Counter, PWM_width_error_Counter, General_Counter, General_Counter_Error);
             }
         }
     }
