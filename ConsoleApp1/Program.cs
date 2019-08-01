@@ -235,7 +235,6 @@ public class PortChat
 
             ArduinoCOMPort = args[2];
         }
-
         ArduinoPortInitialization();
         // Set the read/write timeouts
         _serialPort.ReadTimeout = 500;
@@ -244,22 +243,21 @@ public class PortChat
         _serialPort.ReadBufferSize = 6000000;
         udpClient.Connect(localAddr, remotePort);
         _continue = true;
-        if (!param.Equals("PWMVoltageAtPowerCycle"))
-        {
-            _serialPort.Open();
-
-            readThread.Start();
-        }
-
-
+        SendToUI(udpClient, "InitData", 0, 0, 0, 0);
+        Console.WriteLine("Test will start in 15 seconds.");
+        Console.WriteLine("Type quit to exit");
+        Console.WriteLine("Channel ID: " + portOffset.ToString());
+        //if (!param.Equals("PWMVoltageAtPowerCycle"))
+        //{
+        _serialPort.Open();
+        readThread.Start();
+        //}
         if (param.Equals("PWMVoltageAtPowerCycle"))
         {
-            Console.WriteLine("Send PWRUP to start test.");
+            ColoerdTimer(15000);
+            WriteToArduino("PWRUP");
         }
-        Console.WriteLine("Type QUIT to exit");
-        Console.WriteLine("Channel ID: " + portOffset.ToString());
         stopWatch.Start();
-        SendToUI(udpClient, "InitData", 0, 0, 0, 0);
         while (_continue)
         {
             message = Console.ReadLine();
@@ -866,7 +864,7 @@ public class PortChat
             }
             if (param.Equals("PWMToRelay"))
             {
-                int LongTest = 0;
+                int LongTest = -1;
                 int ServoPWMLength = 0;
                 int MotorPWMLength = 0;
                 //stopWatch = new Stopwatch();

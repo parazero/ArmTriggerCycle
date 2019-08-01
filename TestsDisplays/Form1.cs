@@ -12,6 +12,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Timers;
+using System.Net.Mail;
+using System.Xml;
+using System.IO;
 
 namespace TestsDisplays
 {
@@ -26,18 +30,21 @@ namespace TestsDisplays
         static string SMAComParam = "";
         static string strCmdText = "";
         static string TestNameParam = "";
-
+        string PCName = "";
         static Process p;
 
-        public int PIDValue;
+        public int PIDValue = 0;
 
         IPAddress localAddr = IPAddress.Parse("127.0.0.1");
         UdpClient udpClient = new UdpClient();
         IPEndPoint RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
         bool _continue;
+        public bool IsMailSentToday = true;
 
         public delegate void AddDataDelegate(String instring, TextBox textBoxToUpdate);
         public AddDataDelegate textBoxUpdateDelegate;
+
+        public System.Timers.Timer WatchdogTimer = new System.Timers.Timer(1000 * 60);
 
         public Form1()
         {
@@ -57,6 +64,10 @@ namespace TestsDisplays
                 SmartAirPortcomboBox.Items.Add(s);
 
             }
+            PCName = System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToString();
+            WatchdogTimer.Elapsed += OnTimedEvent;
+            WatchdogTimer.AutoReset = true;
+            WatchdogTimer.Enabled = true;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -83,7 +94,7 @@ namespace TestsDisplays
                 int value2Length = error2Index - value2Index;
                 int error2Length = PIDIndex - error2Index;
                 int PIDLength = eolIndex - PIDIndex;
-                PIDValue = Convert.ToInt32(returnData.Substring(PIDIndex + 4, PIDLength-4));
+                PIDValue = Convert.ToInt32(returnData.Substring(PIDIndex + 4, PIDLength - 4));
                 //RemoteChannellabel.Text = "Remote Channel ID: " + PIDValue.ToString();
                 if (returnData.Contains("MotorSignal:"))
                 {
@@ -270,7 +281,7 @@ namespace TestsDisplays
                         _continue = false;
                 }
             }
-            
+
         }
 
         public void AddTextTotextBoxMethod(String myString, TextBox textBoxToUpdate)
@@ -464,7 +475,7 @@ namespace TestsDisplays
                 }
                 Thread writeThread = new Thread(() => WriteDataAsync(udpClient));
                 writeThread.Start();
-                strCmdText = "/C ConsoleSerialPortReader.exe " + TestNameParam + " "  + SMAComParam + " " + ArduinoComParam + " " + currentProcess.Id.ToString();
+                strCmdText = "/C ConsoleSerialPortReader.exe " + TestNameParam + " " + SMAComParam + " " + ArduinoComParam + " " + currentProcess.Id.ToString();
                 Process p = Process.Start("CMD.exe", strCmdText);
 
             }
@@ -546,6 +557,74 @@ namespace TestsDisplays
                                 "NVI is set to 400,\r\n" +
                                 "Arduino_Pyro_Nano_ReadPWMWithCommands is loaded to arduino.", "Message");
             }
+        }
+
+        private void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
+        {
+            if (buttonStart.Text.Equals("Stop"))
+            {
+
+                try
+                {
+                    if (DateTime.Now.Hour.Equals(8) && !IsMailSentToday)
+                    {
+                        IsMailSentToday = true;
+                        string MailBody = "PC Name: " + PCName + "\r\n" +
+                        "Test: " + TestName.Text + "\r\n" +
+                        "PassedTest #1: " + PassedTest1textBox.Text + "\r\n" +
+                        "FailedTest #1: " + FailedTests1textBox.Text + "\r\n" +
+                        "PassedTest #2: " + passedTests3textBox.Text + "\r\n" +
+                        "FailedTest #2: " + failedTests2textBox.Text + "\r\n";
+                        XmlDocument doc = new XmlDocument();
+                        doc.Load(".\\Resources\\emailList.xml");
+                        foreach (XmlNode node in doc.DocumentElement.ChildNodes)
+                        {
+                            string text = node.InnerText; //or loop through its children as well
+                            SendMail(text, "Long run test - Daily report - " + TestName.Text, MailBody);
+                        }
+                        
+                    }
+                    else if (!DateTime.Now.Hour.Equals(8) && IsMailSentToday)
+                    {
+                        IsMailSentToday = false;
+                    }
+                    Process W = Process.GetProcessById(PIDValue);// GetProcesses();
+                }
+                catch (Exception Ex)//if (W.HasExited)
+                {
+                    string MailBody = "PC Name: " + PCName + "\r\n" +
+                        "Test: " + TestName.Text + "\r\n" +
+                        "PassedTest #1: " + PassedTest1textBox.Text + "\r\n" +
+                        "FailedTest #1: " + FailedTests1textBox.Text + "\r\n" +
+                        "PassedTest #2: " + passedTests3textBox.Text + "\r\n" +
+                        "FailedTest #2: " + failedTests2textBox.Text + "\r\n";
+                    XmlDocument doc = new XmlDocument(); 
+                    doc.Load(".\\Resources\\emailList.xml");
+                    foreach (XmlNode node in doc.DocumentElement.ChildNodes)
+                    {
+                        string text = node.InnerText; //or loop through its children as well
+                        SendMail(text, "Long run test - Daily report - " + TestName.Text, MailBody);
+                    }
+                    Process p = Process.Start("CMD.exe", strCmdText);
+                }
+            }
+        }
+
+        private void SendMail(string SendTo, string MailSubject, string MailBody)
+        {
+            MailMessage mail = new MailMessage();
+            SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
+
+            mail.From = new MailAddress("parazeroauto@gmail.com");
+            mail.To.Add(SendTo);
+            mail.Subject = MailSubject;
+            mail.Body = MailBody;
+
+            SmtpServer.Port = 587;
+            SmtpServer.Credentials = new System.Net.NetworkCredential("parazeroauto", "fdfdfd3030");
+            SmtpServer.EnableSsl = true;
+
+            SmtpServer.Send(mail);
         }
     }
 }
