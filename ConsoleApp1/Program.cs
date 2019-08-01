@@ -206,6 +206,7 @@ public class PortChat
             _serialPort.StopBits = SetPortStopBits(_serialPort.StopBits);
             _serialPort.Handshake = SetPortHandshake(_serialPort.Handshake);
             log.Debug("Port Data: COM ID: " + _serialPort.PortName);
+            log.Debug("Arduino COM ID: " + args[2]);
 
             ArduinoCOMPort = SetPortName(ArduinoCOMPort);
         }
@@ -232,6 +233,7 @@ public class PortChat
             _serialPort.Handshake = 0;
 
             log.Debug("Port Data: COM ID: " + _serialPort.PortName);
+            log.Debug("Arduino COM ID: " + args[2]);
 
             ArduinoCOMPort = args[2];
         }

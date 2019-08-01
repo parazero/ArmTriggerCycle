@@ -603,7 +603,7 @@ namespace TestsDisplays
                     foreach (XmlNode node in doc.DocumentElement.ChildNodes)
                     {
                         string text = node.InnerText; //or loop through its children as well
-                        SendMail(text, "Long run test - Daily report - " + TestName.Text, MailBody);
+                        SendMail(text, "Long run test - Crash report - " + TestName.Text, MailBody);
                     }
                     Process p = Process.Start("CMD.exe", strCmdText);
                 }
