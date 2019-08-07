@@ -86,6 +86,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy /Y "$(TargetDir)" "C:\Nadav"</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetDir)" "C:\Tests"  /Y
+copy "$(TargetDir)\Resources\" "C:\Tests\Resources\"  /Y</PostBuildEvent>
   </PropertyGroup>
 </Project>
