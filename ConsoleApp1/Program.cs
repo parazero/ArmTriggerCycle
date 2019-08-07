@@ -1107,7 +1107,7 @@ public class PortChat
                     WriteToSmartAir("fire");
                     stopWatch.Restart();
                 }
-                if (message.Contains("MOTOR OFF PWM LOW") || message.Contains("PYRO PWM LOW"))
+                if (FullTextSmartAir.Contains("MOTOR OFF PWM LOW") || FullTextSmartAir.Contains("PYRO PWM LOW"))
                 {
                     Console.WriteLine("Reset in 25 Seconds");
                     log.Debug("Reset SmartAir in 25 seconds ");
