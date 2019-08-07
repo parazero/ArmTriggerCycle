@@ -522,7 +522,7 @@ namespace TestsDisplays
             {
                 MessageBox.Show("Make sure:\r\n" +
                                 "PSTO is set to 20 seconds,\r\n" +
-                                "MSTO is set to 20 seconds,\r\n" +
+                                "MSTO is set to 50 seconds,\r\n" +
                                 "PSOF is set to 1000,\r\n" +
                                 "PSON is set to 1900,\r\n" +
                                 "MSOF is set to 1000,\r\n" +
