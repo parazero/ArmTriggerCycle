@@ -134,56 +134,6 @@ public class PortChat
 
         localPort = localBasePort + portOffset;
         remotePort = remoteBasePort + portOffset;
-        /*if (param.Equals("MotorSignalDetection"))
-        {
-            localPort = localBasePort;
-            remotePort = remoteBasePort;
-        }
-        else if (param.Equals("Modes"))
-        {
-            localPort = localBasePort + 1;
-            remotePort = remoteBasePort + 1;
-        }
-        else if (param.Equals("ArmDisarm"))
-        {
-            localPort = localBasePort + 2;
-            remotePort = remoteBasePort + 2;
-        }
-        else if (param.Equals("Discharge"))
-        {
-            localPort = localBasePort + 3;
-            remotePort = remoteBasePort + 3;
-        }
-
-        else if (param.Equals("XBTTest"))
-        {
-            localPort = localBasePort + 4;
-            remotePort = remoteBasePort + 4;
-        }
-
-        else if (param.Equals("XBTTestPowerUp"))
-        {
-            localPort = localBasePort + 5;
-            remotePort = remoteBasePort + 5;
-        }
-
-        else if (param.Equals("ArmAtStartUp"))
-        {
-            localPort = localBasePort + 6;
-            remotePort = remoteBasePort + 6;
-        }
-
-        else if (param.Equals("TriggerDueToRC"))
-        {
-            localPort = localBasePort + 7;
-            remotePort = remoteBasePort + 7;
-        }
-
-        else if (param.Equals("DisarmDueToNoVib"))
-        {
-            localPort = localBasePort + 8;
-            remotePort = remoteBasePort + 8;
-        }*/
         //LogName1 = "d.log";//param + "_" + DateTime.Now.ToString().Replace("/","-").Replace(" ","_").Replace(":","-") + ".log";
         //log4net.GlobalContext.Properties["LogName"] = LogName1;
         log.Debug(param);
@@ -851,11 +801,8 @@ public class PortChat
                 int LongTest = -1;
                 bool ServoPWMLength = false;
                 bool MotorPWMLength = false;
-                //stopWatch = new Stopwatch();
                 if (!stopWatch.IsRunning)
                     stopWatch.Start();
-                //WriteToSmartAir("rst");
-                //WaitForSuccessfulInit();
                 if (FullTextSmartAir.Contains(": Finished successfully"))
                 {
                     FullTextSmartAir = "";
@@ -927,9 +874,7 @@ public class PortChat
                         log.Error(FullTextArduino);
                     }
                     FullTextSmartAir = "";
-                    //WriteToSmartAir("fire");
                     WriteToSmartAir("fire", "!RC was Trigger PYRO.", true, 2);
-                    //WaitForText("SWITCH MOTOR_OFF");
                     WriteToArduino("PWMREADServo");
                     FullTextArduino = "";
                     Thread.Sleep(1000);
@@ -984,15 +929,38 @@ public class PortChat
                     WriteToSmartAir("rst", "!Application................: Start", true, 3);
                     WaitForReset = true;
                 }
+                else if (ts.TotalMilliseconds >= 120000)
+                {
+                    LongTest++;
+                    WaitForReset = true;
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Test Did not finish within 120 seconds. #:" + LongTest.ToString());
+                    Console.ResetColor();
+                    log.Error("Test Did not finish within 120 seconds. #:" + LongTest.ToString());
+                    FullTextSmartAir = "";
+                    WriteToSmartAir("rst", "!Application................: Start", true, 3);
+                    ColoerdTimer(5000);
+                    stopWatch.Restart();
+                    ts = ts.Subtract(ts);
+                    try
+                    {
+                        if (!_serialPort.IsOpen)
+                        {
+                            _serialPort.Open();
+                        }
+                    }
+                    catch (Exception Ex)
+                    {
+                        log.Error("Com Port Does not exists????"); //does not exist
+                        log.Error(Ex);
+                    }
+                }
                 SendToUI(udpClient, "PWMToRelay", PWM_width_Counter, PWM_width_error_Counter, General_Counter, General_Counter_Error);
             }
             if (param.Equals("PWMToRelaySoftReset"))
             {
                 int LongTest = 0;
                 bool TrueOrFalse = false;
-                //stopWatch = new Stopwatch();
-                //WriteToSmartAir("rst");
-                //WaitForSuccessfulInit();
                 if (!stopWatch.IsRunning)
                     stopWatch.Start();
                 if (FullTextSmartAir.Contains(": Finished successfully"))
@@ -2058,42 +2026,12 @@ public class PortChat
         string indata = sp.ReadExisting();
         if (!indata.Equals(""))
         {
-            lock (locker)
-            {
-
                 FullTextSmartAir += indata;
-            }
         }
-        /*
-        try
-        {
-            if (_serialPort.IsOpen)
-            {
-                message = _serialPort.ReadLine();
-                FullTextSmartAir += message;
-            }
-        }
-        catch (TimeoutException)
-        {
-            if (_serialPort.IsOpen)
-            {
-                message = _serialPort.ReadExisting();
-                FullTextSmartAir += message;
-            }
-        }
-        catch (Exception Ex)
-        {
-            log.Error("Port Exception.");
-            log.Error(Ex);
-            log.Error("Serial port info:");
-            log.Error(_serialPort);
-        }*/
         if (!indata.Length.Equals(0))
         {
             log.Debug(indata);
             Console.WriteLine(indata);
         }
-
-
     }
 }
